@@ -1,14 +1,17 @@
 package com.rendy.classnote.ui.schedule
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.GridLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.data.local.entity.CourseEntity
 import com.rendy.classnote.databinding.FragmentCourseEditBinding
@@ -33,6 +36,13 @@ class CourseEditFragment : Fragment() {
     private val days = listOf("週一", "週二", "週三", "週四", "週五")
     private val periods = (1..7).map { "第 $it 節" }
 
+    private val presetColors = listOf(
+        "#F44336", "#E91E63", "#9C27B0", "#3F51B5",
+        "#2196F3", "#00BCD4", "#4CAF50", "#8BC34A",
+        "#FFEB3B", "#FF9800", "#795548", "#607D8B"
+    )
+    private var selectedColorHex: String = "#4CAF50"
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -53,6 +63,8 @@ class CourseEditFragment : Fragment() {
             setDropdown(binding.spinnerPeriod, periods, args.period - 1)
         }
 
+        updateColorPreview()
+        binding.btnPickColor.setOnClickListener { showColorPickerDialog() }
         binding.btnSave.setOnClickListener { saveCourse() }
         binding.btnCancel.setOnClickListener { findNavController().popBackStack() }
     }
@@ -82,6 +94,51 @@ class CourseEditFragment : Fragment() {
         binding.etRoom.setText(course.room)
         setDropdown(binding.spinnerDay, days, course.dayOfWeek - 1)
         setDropdown(binding.spinnerPeriod, periods, course.period - 1)
+        selectedColorHex = course.colorHex
+        updateColorPreview()
+    }
+
+    private fun updateColorPreview() {
+        binding.colorPreview.setBackgroundColor(Color.parseColor(selectedColorHex))
+    }
+
+    private fun showColorPickerDialog() {
+        val dp = resources.displayMetrics.density
+        val cellSize = (44 * dp).toInt()
+        val padding = (8 * dp).toInt()
+
+        val grid = GridLayout(requireContext()).apply {
+            columnCount = 4
+            setPadding(padding, padding, padding, padding)
+        }
+
+        presetColors.forEach { hex ->
+            val swatch = View(requireContext()).apply {
+                setBackgroundColor(Color.parseColor(hex))
+                layoutParams = GridLayout.LayoutParams().apply {
+                    width = cellSize
+                    height = cellSize
+                    setMargins(padding / 2, padding / 2, padding / 2, padding / 2)
+                }
+            }
+            grid.addView(swatch)
+        }
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle("選擇顏色")
+            .setView(grid)
+            .setNegativeButton("取消", null)
+            .create()
+
+        presetColors.forEachIndexed { i, hex ->
+            grid.getChildAt(i).setOnClickListener {
+                selectedColorHex = hex
+                updateColorPreview()
+                dialog.dismiss()
+            }
+        }
+
+        dialog.show()
     }
 
     private fun saveCourse() {
@@ -98,7 +155,8 @@ class CourseEditFragment : Fragment() {
             period = selectedIndex(binding.spinnerPeriod, periods) + 1,
             name = name,
             teacher = binding.etTeacher.text.toString().trim(),
-            room = binding.etRoom.text.toString().trim()
+            room = binding.etRoom.text.toString().trim(),
+            colorHex = selectedColorHex
         )
 
         if (args.courseId > 0) viewModel.updateCourse(course)

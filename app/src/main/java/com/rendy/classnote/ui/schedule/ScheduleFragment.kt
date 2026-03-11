@@ -4,12 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayoutMediator
+import com.google.android.material.textfield.TextInputEditText
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.R
 import com.rendy.classnote.databinding.FragmentScheduleBinding
+import kotlinx.coroutines.launch
 
 /**
  * 課表主畫面：包含「週檢視」與「日曆檢視」兩個 Tab
@@ -45,6 +52,55 @@ class ScheduleFragment : Fragment() {
                 else -> ""
             }
         }.attach()
+
+        setupSemesterSelector()
+
+        binding.btnAddSemester.setOnClickListener { showAddSemesterDialog() }
+    }
+
+    private fun setupSemesterSelector() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.semesterIds.collect { semesters ->
+                    val list = if (semesters.isEmpty()) listOf(viewModel.currentSemesterId.value) else semesters
+                    val adapter = ArrayAdapter(
+                        requireContext(),
+                        android.R.layout.simple_dropdown_item_1line,
+                        list
+                    )
+                    binding.spinnerSemester.setAdapter(adapter)
+                    // 顯示目前學期
+                    val current = viewModel.currentSemesterId.value
+                    if (binding.spinnerSemester.text.toString() != current) {
+                        binding.spinnerSemester.setText(current, false)
+                    }
+                }
+            }
+        }
+
+        binding.spinnerSemester.setOnItemClickListener { _, _, position, _ ->
+            val adapter = binding.spinnerSemester.adapter ?: return@setOnItemClickListener
+            viewModel.setSemester(adapter.getItem(position) as String)
+        }
+    }
+
+    private fun showAddSemesterDialog() {
+        val input = TextInputEditText(requireContext()).apply {
+            hint = "例如 2025-1"
+            setSingleLine()
+        }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("新增學期")
+            .setView(input)
+            .setPositiveButton("確認") { _, _ ->
+                val newId = input.text.toString().trim()
+                if (newId.isNotEmpty()) {
+                    viewModel.setSemester(newId)
+                    binding.spinnerSemester.setText(newId, false)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     override fun onDestroyView() {

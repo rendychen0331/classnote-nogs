@@ -10,6 +10,9 @@ interface ReminderNotificationDao {
     @Query("SELECT * FROM reminder_notifications WHERE reminderId = :reminderId ORDER BY triggerAt")
     fun getNotificationsForReminder(reminderId: Long): Flow<List<ReminderNotificationEntity>>
 
+    @Query("SELECT * FROM reminder_notifications WHERE reminderId = :reminderId ORDER BY triggerAt")
+    suspend fun getNotificationsOnce(reminderId: Long): List<ReminderNotificationEntity>
+
     @Query("SELECT * FROM reminder_notifications WHERE isFired = 0 AND triggerAt > :now ORDER BY triggerAt")
     suspend fun getPendingNotifications(now: Long): List<ReminderNotificationEntity>
 

@@ -69,6 +69,10 @@ class ReminderEditFragment : Fragment() {
             binding.etTitle.setText(reminder.title)
             binding.etNote.setText(reminder.note)
             binding.tvDueDate.text = reminder.dueDate ?: ""
+            val existing = app.reminderRepository.getNotificationsOnce(reminderId)
+            notificationTimes.clear()
+            notificationTimes.addAll(existing.map { it.triggerAt })
+            refreshNotificationList()
         }
     }
 

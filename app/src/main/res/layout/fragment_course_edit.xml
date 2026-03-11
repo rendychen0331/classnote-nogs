@@ -96,6 +96,30 @@
                 android:inputType="none" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <View android:layout_height="12dp" android:layout_width="match_parent" />
+
+        <!-- 顏色 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View
+                android:id="@+id/colorPreview"
+                android:layout_width="36dp"
+                android:layout_height="36dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickColor"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="選擇顏色" />
+
+        </LinearLayout>
+
         <View android:layout_height="24dp" android:layout_width="match_parent" />
 
         <!-- 按鈕列 -->

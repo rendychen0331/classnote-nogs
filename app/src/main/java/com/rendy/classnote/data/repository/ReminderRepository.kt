@@ -41,6 +41,9 @@ class ReminderRepository(
     fun getNotificationsForReminder(reminderId: Long): Flow<List<ReminderNotificationEntity>> =
         notificationDao.getNotificationsForReminder(reminderId)
 
+    suspend fun getNotificationsOnce(reminderId: Long): List<ReminderNotificationEntity> =
+        notificationDao.getNotificationsOnce(reminderId)
+
     suspend fun getAllPendingNotifications(): List<ReminderNotificationEntity> =
         notificationDao.getAllPendingNotifications()
 

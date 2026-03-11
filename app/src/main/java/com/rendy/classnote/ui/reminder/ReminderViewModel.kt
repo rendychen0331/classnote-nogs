@@ -32,9 +32,7 @@ class ReminderViewModel(
     fun updateReminder(reminder: ReminderEntity, notificationTimes: List<Long>) =
         viewModelScope.launch {
             repository.updateReminder(reminder)
-            // 取消現有排程
-            val existing = repository.getNotificationsForReminder(reminder.id)
-            repository.deleteNotificationsForReminder(reminder.id)
+            cancelPendingNotifications(reminder.id)
             scheduleNotifications(reminder.id, notificationTimes)
         }
 
