@@ -138,13 +138,16 @@ class ReminderEditFragment : Fragment() {
             dueDate = binding.tvDueDate.text.toString().ifEmpty { null }
         )
 
-        if (args.reminderId > 0) {
-            viewModel.updateReminder(reminder, notificationTimes)
-        } else {
-            viewModel.addReminder(reminder, notificationTimes)
+        // 用 lifecycleScope 確保存完（包含通知時間）再導航，
+        // 避免 viewModelScope 因 Fragment 銷毀提前取消導致通知時間未儲存
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (args.reminderId > 0) {
+                viewModel.updateReminderAndWait(reminder, notificationTimes)
+            } else {
+                viewModel.addReminderAndWait(reminder, notificationTimes)
+            }
+            findNavController().popBackStack()
         }
-
-        findNavController().popBackStack()
     }
 
     override fun onDestroyView() {

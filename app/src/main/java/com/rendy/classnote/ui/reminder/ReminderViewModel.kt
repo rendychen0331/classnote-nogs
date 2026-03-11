@@ -28,6 +28,12 @@ class ReminderViewModel(
             scheduleNotifications(reminderId, notificationTimes)
         }
 
+    /** 新增提醒（suspend 版，確保存完才返回） */
+    suspend fun addReminderAndWait(reminder: ReminderEntity, notificationTimes: List<Long>) {
+        val reminderId = repository.insertReminder(reminder)
+        scheduleNotifications(reminderId, notificationTimes)
+    }
+
     /** 更新提醒：先取消舊通知再重新排程 */
     fun updateReminder(reminder: ReminderEntity, notificationTimes: List<Long>) =
         viewModelScope.launch {
@@ -35,6 +41,13 @@ class ReminderViewModel(
             cancelPendingNotifications(reminder.id)
             scheduleNotifications(reminder.id, notificationTimes)
         }
+
+    /** 更新提醒（suspend 版，確保存完才返回） */
+    suspend fun updateReminderAndWait(reminder: ReminderEntity, notificationTimes: List<Long>) {
+        repository.updateReminder(reminder)
+        cancelPendingNotifications(reminder.id)
+        scheduleNotifications(reminder.id, notificationTimes)
+    }
 
     /** 標記完成（從列表消失），並取消所有未觸發通知 */
     fun completeReminder(reminderId: Long) = viewModelScope.launch {
