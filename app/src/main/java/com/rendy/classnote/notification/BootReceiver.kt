@@ -20,9 +20,14 @@ class BootReceiver : BroadcastReceiver() {
 
         val app = context.applicationContext as ClassNoteApplication
 
+        val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
-            val pending = app.reminderRepository.getAllPendingNotifications()
-            ReminderScheduler.rescheduleAll(context, pending)
+            try {
+                val pending = app.reminderRepository.getAllPendingNotifications()
+                ReminderScheduler.rescheduleAll(context, pending)
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 }

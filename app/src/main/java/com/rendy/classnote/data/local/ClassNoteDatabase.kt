@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
         ReminderEntity::class,
         ReminderNotificationEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class ClassNoteDatabase : RoomDatabase() {
@@ -42,6 +42,7 @@ abstract class ClassNoteDatabase : RoomDatabase() {
                     "classnote_database"
                 )
                     .addCallback(DatabaseCallback())
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

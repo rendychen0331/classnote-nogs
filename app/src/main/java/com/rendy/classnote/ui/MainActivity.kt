@@ -17,6 +17,7 @@ import com.rendy.classnote.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var navController: NavController
 
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* no-op */ }
@@ -28,17 +29,26 @@ class MainActivity : AppCompatActivity() {
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController: NavController = navHostFragment.navController
+        navController = navHostFragment.navController
 
         binding.bottomNavigation.setupWithNavController(navController)
 
-        requestRequiredPermissions()
+        // 僅首次建立時請求權限（避免旋轉螢幕重複跳轉設定頁）
+        if (savedInstanceState == null) {
+            requestRequiredPermissions()
+            handleNavigateIntent(intent)
+        }
+    }
 
-        // 處理通知點擊跳轉
-        intent?.getStringExtra("navigate_to")?.let { destination ->
-            if (destination == "reminders") {
-                navController.navigate(R.id.reminderListFragment)
-            }
+    // app 已在後台時，通知點擊會觸發 onNewIntent 而非 onCreate
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNavigateIntent(intent)
+    }
+
+    private fun handleNavigateIntent(intent: Intent?) {
+        if (intent?.getStringExtra("navigate_to") == "reminders") {
+            navController.navigate(R.id.reminderListFragment)
         }
     }
 

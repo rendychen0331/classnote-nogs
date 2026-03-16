@@ -9,7 +9,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.databinding.FragmentCalendarViewBinding
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -31,6 +33,7 @@ class CalendarViewFragment : Fragment() {
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     private var selectedDate: LocalDate = LocalDate.now()
+    private var dayCoursesJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,24 +55,20 @@ class CalendarViewFragment : Fragment() {
     }
 
     private fun loadDayCourses(date: LocalDate) {
+        dayCoursesJob?.cancel()
         val dayOfWeek = date.dayOfWeek.value  // 1=Mon, 7=Sun
         if (dayOfWeek > 5) {
-            // 週末無課
             binding.tvDayCourses.text = "週末無課"
             return
         }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            scheduleViewModel.courses.collectLatest { courses ->
-                val dayCourses = courses.filter { it.dayOfWeek == dayOfWeek }
-                    .sortedBy { it.period }
-
-                val dateStr = date.format(dateFormatter)
-
-                // 合併臨時修改
-                scheduleViewModel.getOverridesByDate(dateStr).collectLatest { overrides ->
+        val dateStr = date.format(dateFormatter)
+        dayCoursesJob = viewLifecycleOwner.lifecycleScope.launch {
+            scheduleViewModel.courses
+                .combine(scheduleViewModel.getOverridesByDate(dateStr)) { courses, overrides ->
+                    val dayCourses = courses.filter { it.dayOfWeek == dayOfWeek }
+                        .sortedBy { it.period }
                     val overrideMap = overrides.associateBy { it.courseId }
-                    val displayText = dayCourses.joinToString("\n") { course ->
+                    dayCourses.joinToString("\n") { course ->
                         val override = overrideMap[course.id]
                         when {
                             override?.overrideType == "cancel" ->
@@ -80,10 +79,8 @@ class CalendarViewFragment : Fragment() {
                                 "第 ${course.period} 節：${course.name}"
                         }
                     }.ifEmpty { "今日無課" }
-
-                    binding.tvDayCourses.text = displayText
                 }
-            }
+                .collectLatest { displayText -> binding.tvDayCourses.text = displayText }
         }
     }
 

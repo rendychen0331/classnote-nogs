@@ -21,7 +21,10 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("courseId")]
+    indices = [
+        Index("courseId"),
+        Index(value = ["courseId", "date"], unique = true)
+    ]
 )
 data class CourseOverrideEntity(
     @PrimaryKey(autoGenerate = true)

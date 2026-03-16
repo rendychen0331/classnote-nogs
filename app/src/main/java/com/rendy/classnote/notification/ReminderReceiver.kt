@@ -23,18 +23,23 @@ class ReminderReceiver : BroadcastReceiver() {
         val app = context.applicationContext as ClassNoteApplication
         val reminderRepo = app.reminderRepository
 
+        val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
-            val reminder = reminderRepo.getReminderById(reminderId) ?: return@launch
-            if (reminder.isCompleted) return@launch
+            try {
+                val reminder = reminderRepo.getReminderById(reminderId) ?: return@launch
+                if (reminder.isCompleted) return@launch
 
-            NotificationHelper.showReminderNotification(
-                context,
-                notificationId.toInt(),
-                reminder.title,
-                reminder.note.ifBlank { "點擊查看提醒詳情" }
-            )
+                NotificationHelper.showReminderNotification(
+                    context,
+                    (notificationId and 0x7FFFFFFF).toInt(),
+                    reminder.title,
+                    reminder.note.ifBlank { "點擊查看提醒詳情" }
+                )
 
-            reminderRepo.markNotificationFired(notificationId)
+                reminderRepo.markNotificationFired(notificationId)
+            } finally {
+                pendingResult.finish()
+            }
         }
     }
 }

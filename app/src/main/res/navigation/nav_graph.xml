@@ -50,6 +50,10 @@
             android:name="period"
             app:argType="integer"
             android:defaultValue="1" />
+        <argument
+            android:name="semesterId"
+            app:argType="string"
+            android:defaultValue="2024-1" />
     </fragment>
 
     <!-- ── 提醒 ── -->

@@ -17,16 +17,20 @@ object ReminderScheduler {
         val intent = buildIntent(context, notification)
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            notification.id.toInt(),
+            (notification.id and 0x7FFFFFFF).toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        alarmManager.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            notification.triggerAt,
-            pendingIntent
-        )
+        try {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                notification.triggerAt,
+                pendingIntent
+            )
+        } catch (e: SecurityException) {
+            // SCHEDULE_EXACT_ALARM 未授權，略過排程（資料已存入 DB）
+        }
     }
 
     fun cancelNotification(context: Context, notificationId: Long) {
@@ -36,10 +40,10 @@ object ReminderScheduler {
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            notificationId.toInt(),
+            (notificationId and 0x7FFFFFFF).toInt(),
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        ) ?: return
         alarmManager.cancel(pendingIntent)
     }
 

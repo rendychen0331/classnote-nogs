@@ -16,6 +16,7 @@ import com.rendy.classnote.R
 import com.rendy.classnote.data.local.entity.CourseEntity
 import com.rendy.classnote.databinding.FragmentWeekViewBinding
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class WeekViewFragment : Fragment() {
@@ -42,9 +43,13 @@ class WeekViewFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            scheduleViewModel.courses.collectLatest { courses ->
-                renderWeekGrid(courses)
-            }
+            scheduleViewModel.courses
+                .combine(scheduleViewModel.periodTimes) { courses, periodTimes ->
+                    Pair(courses, periodTimes)
+                }
+                .collectLatest { (courses, periodTimes) ->
+                    renderWeekGrid(courses, periodTimes)
+                }
         }
 
         binding.fabAddCourse.setOnClickListener {
@@ -54,7 +59,7 @@ class WeekViewFragment : Fragment() {
         }
     }
 
-    private fun renderWeekGrid(courses: List<CourseEntity>) {
+    private fun renderWeekGrid(courses: List<CourseEntity>, periodTimes: List<com.rendy.classnote.data.local.entity.PeriodTimeEntity>) {
         val container = binding.gridContainer
         container.removeAllViews()
 
@@ -71,7 +76,6 @@ class WeekViewFragment : Fragment() {
             }
 
             // 節次時間標籤（左欄）
-            val periodTimes = scheduleViewModel.periodTimes.value
             val pt = periodTimes.getOrNull(period - 1)
             val timeLabel = if (pt != null) {
                 "%02d:%02d".format(pt.startMinute / 60, pt.startMinute % 60)
@@ -100,7 +104,8 @@ class WeekViewFragment : Fragment() {
                                 .actionWeekViewFragmentToCourseEditFragment(
                                     courseId = course.id,
                                     dayOfWeek = day,
-                                    period = period
+                                    period = period,
+                                    semesterId = scheduleViewModel.currentSemesterId.value
                                 )
                         )
                     } else {
@@ -109,7 +114,8 @@ class WeekViewFragment : Fragment() {
                                 .actionWeekViewFragmentToCourseEditFragment(
                                     courseId = -1L,
                                     dayOfWeek = day,
-                                    period = period
+                                    period = period,
+                                    semesterId = scheduleViewModel.currentSemesterId.value
                                 )
                         )
                     }

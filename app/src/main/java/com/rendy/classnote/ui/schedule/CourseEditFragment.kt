@@ -9,12 +9,14 @@ import android.widget.ArrayAdapter
 import android.widget.GridLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.data.local.entity.CourseEntity
 import com.rendy.classnote.databinding.FragmentCourseEditBinding
+import kotlinx.coroutines.launch
 
 /**
  * 新增 / 編輯課程
@@ -88,14 +90,19 @@ class CourseEditFragment : Fragment() {
     }
 
     private fun loadCourse(courseId: Long) {
-        val course = viewModel.courses.value.firstOrNull { it.id == courseId } ?: return
-        binding.etName.setText(course.name)
-        binding.etTeacher.setText(course.teacher)
-        binding.etRoom.setText(course.room)
-        setDropdown(binding.spinnerDay, days, course.dayOfWeek - 1)
-        setDropdown(binding.spinnerPeriod, periods, course.period - 1)
-        selectedColorHex = course.colorHex
-        updateColorPreview()
+        binding.btnSave.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            val repo = (requireActivity().application as ClassNoteApplication).courseRepository
+            val course = repo.getCourseById(courseId) ?: return@launch
+            binding.etName.setText(course.name)
+            binding.etTeacher.setText(course.teacher)
+            binding.etRoom.setText(course.room)
+            setDropdown(binding.spinnerDay, days, course.dayOfWeek - 1)
+            setDropdown(binding.spinnerPeriod, periods, course.period - 1)
+            selectedColorHex = course.colorHex
+            updateColorPreview()
+            binding.btnSave.isEnabled = true
+        }
     }
 
     private fun updateColorPreview() {
@@ -150,7 +157,7 @@ class CourseEditFragment : Fragment() {
 
         val course = CourseEntity(
             id = if (args.courseId > 0) args.courseId else 0,
-            semesterId = viewModel.currentSemesterId.value,
+            semesterId = args.semesterId,
             dayOfWeek = selectedIndex(binding.spinnerDay, days) + 1,
             period = selectedIndex(binding.spinnerPeriod, periods) + 1,
             name = name,

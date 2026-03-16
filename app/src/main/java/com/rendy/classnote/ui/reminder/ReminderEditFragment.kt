@@ -2,6 +2,7 @@ package com.rendy.classnote.ui.reminder
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.widget.Toast
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -41,6 +42,10 @@ class ReminderEditFragment : Fragment() {
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     private val timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
+    // 編輯時保留原始欄位，避免儲存時遺失
+    private var originalCourseId: Long? = null
+    private var originalCreatedAt: Long? = null
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -66,12 +71,19 @@ class ReminderEditFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val app = requireActivity().application as ClassNoteApplication
             val reminder = app.reminderRepository.getReminderById(reminderId) ?: return@launch
+            originalCourseId = reminder.courseId
+            originalCreatedAt = reminder.createdAt
             binding.etTitle.setText(reminder.title)
             binding.etNote.setText(reminder.note)
             binding.tvDueDate.text = reminder.dueDate ?: ""
             val existing = app.reminderRepository.getNotificationsOnce(reminderId)
+            // 保留使用者在非同步載入完成前已加入的時間
+            val userAdded = notificationTimes.toList()
             notificationTimes.clear()
-            notificationTimes.addAll(existing.map { it.triggerAt })
+            notificationTimes.addAll(existing.filter { !it.isFired }.map { it.triggerAt })
+            for (t in userAdded) {
+                if (t !in notificationTimes) notificationTimes.add(t)
+            }
             refreshNotificationList()
         }
     }
@@ -100,8 +112,16 @@ class ReminderEditFragment : Fragment() {
                     { _, hour, minute ->
                         val dt = LocalDateTime.of(year, month + 1, day, hour, minute)
                         val millis = dt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                        notificationTimes.add(millis)
-                        refreshNotificationList()
+                        when {
+                            millis <= System.currentTimeMillis() ->
+                                Toast.makeText(requireContext(), "請選擇未來的時間", Toast.LENGTH_SHORT).show()
+                            millis in notificationTimes ->
+                                Toast.makeText(requireContext(), "此時間已加入", Toast.LENGTH_SHORT).show()
+                            else -> {
+                                notificationTimes.add(millis)
+                                refreshNotificationList()
+                            }
+                        }
                     },
                     cal.get(Calendar.HOUR_OF_DAY),
                     cal.get(Calendar.MINUTE),
@@ -135,18 +155,21 @@ class ReminderEditFragment : Fragment() {
             id = if (args.reminderId > 0) args.reminderId else 0,
             title = title,
             note = binding.etNote.text.toString().trim(),
-            dueDate = binding.tvDueDate.text.toString().ifEmpty { null }
+            dueDate = binding.tvDueDate.text.toString().ifEmpty { null },
+            courseId = originalCourseId,
+            createdAt = originalCreatedAt ?: System.currentTimeMillis()
         )
 
-        // 用 lifecycleScope 確保存完（包含通知時間）再導航，
-        // 避免 viewModelScope 因 Fragment 銷毀提前取消導致通知時間未儲存
+        // NonCancellable 確保 DB 寫入不因 lifecycle 取消而中斷
+        // 先複製一份，避免 coroutine suspend 期間 list 被其他 coroutine 修改
+        val times = notificationTimes.toList()
         viewLifecycleOwner.lifecycleScope.launch {
             if (args.reminderId > 0) {
-                viewModel.updateReminderAndWait(reminder, notificationTimes)
+                viewModel.updateReminderAndWait(reminder, times)
             } else {
-                viewModel.addReminderAndWait(reminder, notificationTimes)
+                viewModel.addReminderAndWait(reminder, times)
             }
-            findNavController().popBackStack()
+            if (isAdded) findNavController().popBackStack()
         }
     }
 
