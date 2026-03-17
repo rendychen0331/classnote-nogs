@@ -48,7 +48,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleNavigateIntent(intent: Intent?) {
         if (intent?.getStringExtra("navigate_to") == "reminders") {
-            navController.navigate(R.id.reminderListFragment)
+            // 透過 BottomNavigation 切換，而非直接 navController.navigate()，
+            // 確保 NavigationUI 使用正確的 NavOptions (popUpTo / saveState / restoreState)，
+            // 避免 top-level destination 被 push 到一般 back stack 而無法切換回課表頁
+            binding.bottomNavigation.selectedItemId = R.id.reminderListFragment
         }
     }
 

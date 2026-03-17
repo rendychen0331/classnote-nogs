@@ -31,7 +31,7 @@ class ReminderReceiver : BroadcastReceiver() {
 
                 NotificationHelper.showReminderNotification(
                     context,
-                    (notificationId and 0x7FFFFFFF).toInt(),
+                    notificationId.toInt(),
                     reminder.title,
                     reminder.note.ifBlank { "點擊查看提醒詳情" }
                 )
