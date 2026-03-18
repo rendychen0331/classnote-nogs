@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.data.local.entity.ReminderEntity
+import com.rendy.classnote.data.model.ReminderCategory
 import com.rendy.classnote.databinding.FragmentReminderEditBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -46,6 +47,7 @@ class ReminderEditFragment : Fragment() {
     // 編輯時保留原始欄位，避免儲存時遺失
     private var originalCourseId: Long? = null
     private var originalCreatedAt: Long? = null
+    private var selectedCategory: String? = null
     // 追蹤非同步載入 job，儲存前先等待完成
     private var loadJob: Job? = null
 
@@ -68,6 +70,17 @@ class ReminderEditFragment : Fragment() {
         binding.btnAddNotification.setOnClickListener { pickNotificationTime() }
         binding.btnSave.setOnClickListener { saveReminder() }
         binding.btnCancel.setOnClickListener { findNavController().popBackStack() }
+
+        // Category chip selection
+        binding.chipGroupCategory.setOnCheckedStateChangeListener { _, checkedIds ->
+            selectedCategory = when {
+                checkedIds.contains(binding.chipWork.id) -> ReminderCategory.WORK.name
+                checkedIds.contains(binding.chipHomework.id) -> ReminderCategory.HOMEWORK.name
+                checkedIds.contains(binding.chipExam.id) -> ReminderCategory.EXAM.name
+                checkedIds.contains(binding.chipReminder.id) -> ReminderCategory.REMINDER.name
+                else -> null
+            }
+        }
     }
 
     private fun loadReminder(reminderId: Long) {
@@ -79,6 +92,13 @@ class ReminderEditFragment : Fragment() {
             binding.etTitle.setText(reminder.title)
             binding.etNote.setText(reminder.note)
             binding.tvDueDate.text = reminder.dueDate ?: ""
+            selectedCategory = reminder.category
+            when (reminder.category) {
+                ReminderCategory.WORK.name -> binding.chipWork.isChecked = true
+                ReminderCategory.HOMEWORK.name -> binding.chipHomework.isChecked = true
+                ReminderCategory.EXAM.name -> binding.chipExam.isChecked = true
+                ReminderCategory.REMINDER.name -> binding.chipReminder.isChecked = true
+            }
             val existing = app.reminderRepository.getNotificationsOnce(reminderId)
             // 保留使用者在非同步載入完成前已加入的時間
             val userAdded = notificationTimes.toList()
@@ -160,7 +180,8 @@ class ReminderEditFragment : Fragment() {
             note = binding.etNote.text.toString().trim(),
             dueDate = binding.tvDueDate.text.toString().ifEmpty { null },
             courseId = originalCourseId,
-            createdAt = originalCreatedAt ?: System.currentTimeMillis()
+            createdAt = originalCreatedAt ?: System.currentTimeMillis(),
+            category = selectedCategory
         )
 
         // NonCancellable 確保 DB 寫入不因 lifecycle 取消而中斷

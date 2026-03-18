@@ -36,6 +36,9 @@ class ReminderRepository(
     suspend fun cleanupCompleted() =
         reminderDao.deleteCompletedReminders()
 
+    suspend fun getActiveRemindersOnce(): List<ReminderEntity> =
+        reminderDao.getActiveRemindersOnce()
+
     // ── 通知時間 ──────────────────────────────────────────────────────────
 
     fun getNotificationsForReminder(reminderId: Long): Flow<List<ReminderNotificationEntity>> =

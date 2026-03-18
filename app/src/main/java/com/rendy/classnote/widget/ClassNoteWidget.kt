@@ -1,0 +1,260 @@
+package com.rendy.classnote.widget
+
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.view.View
+import android.widget.RemoteViews
+import androidx.preference.PreferenceManager
+import com.rendy.classnote.R
+import com.rendy.classnote.data.local.ClassNoteDatabase
+import com.rendy.classnote.data.model.ReminderCategory
+import kotlinx.coroutines.runBlocking
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+
+class ClassNoteWidget : AppWidgetProvider() {
+
+    companion object {
+        const val ACTION_SWITCH_TAB = "com.rendy.classnote.SWITCH_TAB"
+        const val ACTION_PREV_MONTH = "com.rendy.classnote.PREV_MONTH"
+        const val ACTION_NEXT_MONTH = "com.rendy.classnote.NEXT_MONTH"
+        const val EXTRA_WIDGET_ID = "widget_id"
+        const val EXTRA_SHOW_CALENDAR = "show_calendar"
+        const val PREF_TAB = "widget_tab_"
+        const val PREF_MONTH = "widget_month_"
+
+        fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
+            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+            val showCalendar = prefs.getBoolean("$PREF_TAB$widgetId", false)
+            val yearMonthStr = prefs.getString("$PREF_MONTH$widgetId", null)
+            val yearMonth = yearMonthStr?.let {
+                runCatching { YearMonth.parse(it) }.getOrNull()
+            } ?: YearMonth.now()
+
+            val views = RemoteViews(context.packageName, R.layout.widget_main)
+
+            // ── Tab click actions ──────────────────────────────────────────
+            val overviewIntent = Intent(context, ClassNoteWidget::class.java).apply {
+                action = ACTION_SWITCH_TAB
+                putExtra(EXTRA_WIDGET_ID, widgetId)
+                putExtra(EXTRA_SHOW_CALENDAR, false)
+            }
+            val calendarIntent = Intent(context, ClassNoteWidget::class.java).apply {
+                action = ACTION_SWITCH_TAB
+                putExtra(EXTRA_WIDGET_ID, widgetId)
+                putExtra(EXTRA_SHOW_CALENDAR, true)
+            }
+            val prevIntent = Intent(context, ClassNoteWidget::class.java).apply {
+                action = ACTION_PREV_MONTH
+                putExtra(EXTRA_WIDGET_ID, widgetId)
+            }
+            val nextIntent = Intent(context, ClassNoteWidget::class.java).apply {
+                action = ACTION_NEXT_MONTH
+                putExtra(EXTRA_WIDGET_ID, widgetId)
+            }
+            val openAppIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+
+            views.setOnClickPendingIntent(R.id.tabOverview,
+                android.app.PendingIntent.getBroadcast(context, widgetId * 10, overviewIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE))
+            views.setOnClickPendingIntent(R.id.tabCalendar,
+                android.app.PendingIntent.getBroadcast(context, widgetId * 10 + 1, calendarIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE))
+            views.setOnClickPendingIntent(R.id.btnCalPrev,
+                android.app.PendingIntent.getBroadcast(context, widgetId * 10 + 2, prevIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE))
+            views.setOnClickPendingIntent(R.id.btnCalNext,
+                android.app.PendingIntent.getBroadcast(context, widgetId * 10 + 3, nextIntent,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE))
+            if (openAppIntent != null) {
+                views.setOnClickPendingIntent(R.id.btnAdd,
+                    android.app.PendingIntent.getActivity(context, widgetId * 10 + 4, openAppIntent,
+                        android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE))
+            }
+
+            // ── Tab styling ────────────────────────────────────────────────
+            if (showCalendar) {
+                views.setInt(R.id.tabCalendar, "setBackgroundResource", R.drawable.widget_tab_selected)
+                views.setTextColor(R.id.tabCalendar, Color.parseColor("#1A1040"))
+                views.setInt(R.id.tabOverview, "setBackgroundResource", 0)
+                views.setTextColor(R.id.tabOverview, Color.parseColor("#AAAACC"))
+                views.setViewVisibility(R.id.containerOverview, View.GONE)
+                views.setViewVisibility(R.id.containerCalendar, View.VISIBLE)
+            } else {
+                views.setInt(R.id.tabOverview, "setBackgroundResource", R.drawable.widget_tab_selected)
+                views.setTextColor(R.id.tabOverview, Color.parseColor("#1A1040"))
+                views.setInt(R.id.tabCalendar, "setBackgroundResource", 0)
+                views.setTextColor(R.id.tabCalendar, Color.parseColor("#AAAACC"))
+                views.setViewVisibility(R.id.containerOverview, View.VISIBLE)
+                views.setViewVisibility(R.id.containerCalendar, View.GONE)
+            }
+
+            // ── Load data ──────────────────────────────────────────────────
+            runBlocking {
+                val db = ClassNoteDatabase.getDatabase(context)
+
+                if (!showCalendar) {
+                    populateOverview(context, views, db, widgetId)
+                } else {
+                    val reminders = db.reminderDao().getActiveRemindersOnce()
+                    CalendarWidgetHelper.populate(views, yearMonth, reminders)
+                }
+            }
+
+            manager.updateAppWidget(widgetId, views)
+        }
+
+        private suspend fun populateOverview(
+            context: Context,
+            views: RemoteViews,
+            db: ClassNoteDatabase,
+            widgetId: Int
+        ) {
+            // ── Determine current semester ID ──────────────────────────────
+            val cal = Calendar.getInstance()
+            val year = cal.get(Calendar.YEAR)
+            val month = cal.get(Calendar.MONTH) + 1
+            val semester = if (month >= 8) 2 else 1
+            val semesterId = "$year-$semester"
+
+            // ── Find next course ───────────────────────────────────────────
+            val today = LocalDate.now()
+            val dayOfWeek = today.dayOfWeek.value  // 1=Mon, 7=Sun; our data uses 1=Mon...5=Fri
+            val periodTimes = db.periodTimeDao().getAllPeriodTimesOnce()
+            val nowMinute = LocalTime.now().hour * 60 + LocalTime.now().minute
+            val todayCourses = if (dayOfWeek <= 5) {
+                db.courseDao().getCoursesByDayOnce(semesterId, dayOfWeek)
+            } else emptyList()
+
+            val nextCourse = todayCourses.firstOrNull { course ->
+                val pt = periodTimes.find { it.period == course.period }
+                pt != null && pt.startMinute > nowMinute
+            }
+
+            // NEXT label
+            if (nextCourse != null) {
+                val pt = periodTimes.find { it.period == nextCourse.period }
+                val timeStr = if (pt != null) {
+                    val h = pt.startMinute / 60
+                    val m = pt.startMinute % 60
+                    "%02d:%02d".format(h, m)
+                } else ""
+                views.setTextViewText(R.id.tvNextLabel, "NEXT: ${nextCourse.name}  $timeStr")
+            } else {
+                views.setTextViewText(R.id.tvNextLabel, "今日無課")
+            }
+
+            // ── Linked reminders for next course ──────────────────────────
+            val linked = if (nextCourse != null) {
+                db.reminderDao().getActiveRemindersOnce()
+                    .filter { it.courseId == nextCourse.id }
+                    .take(2)
+            } else emptyList()
+
+            fun bindLinked(reminderId: Int, catId: Int, titleId: Int, reminder: com.rendy.classnote.data.local.entity.ReminderEntity?) {
+                if (reminder == null) {
+                    views.setViewVisibility(reminderId, View.GONE)
+                } else {
+                    views.setViewVisibility(reminderId, View.VISIBLE)
+                    val cat = ReminderCategory.fromString(reminder.category)
+                    if (cat != null) {
+                        views.setTextViewText(catId, cat.label)
+                        views.setInt(catId, "setBackgroundResource", when (cat) {
+                            ReminderCategory.WORK -> R.drawable.widget_chip_work
+                            ReminderCategory.HOMEWORK -> R.drawable.widget_chip_homework
+                            ReminderCategory.EXAM -> R.drawable.widget_chip_exam
+                            ReminderCategory.REMINDER -> R.drawable.widget_chip_reminder
+                        })
+                    }
+                    views.setTextViewText(titleId, reminder.title)
+                }
+            }
+            bindLinked(R.id.linkedReminder1, R.id.tvLinkedCat1, R.id.tvLinkedTitle1, linked.getOrNull(0))
+            bindLinked(R.id.linkedReminder2, R.id.tvLinkedCat2, R.id.tvLinkedTitle2, linked.getOrNull(1))
+
+            // ── Right panel: soonest upcoming reminder with notification ───
+            val allReminders = db.reminderDao().getActiveRemindersOnce()
+            val notifications = db.reminderNotificationDao().getAllPendingNotifications()
+                .sortedBy { it.triggerAt }
+            val soonestNotif = notifications.firstOrNull()
+            val soonestReminder = soonestNotif?.let { n -> allReminders.find { it.id == n.reminderId } }
+
+            if (soonestReminder != null && soonestNotif != null) {
+                views.setViewVisibility(R.id.containerRightReminder, View.VISIBLE)
+                views.setTextViewText(R.id.tvRightReminderTitle, soonestReminder.title)
+                val dt = java.time.LocalDateTime.ofInstant(
+                    java.time.Instant.ofEpochMilli(soonestNotif.triggerAt),
+                    java.time.ZoneId.systemDefault()
+                )
+                val timeLabel = dt.format(DateTimeFormatter.ofPattern("上午/下午 HH:mm".let {
+                    if (dt.hour < 12) "上午 hh:mm" else "下午 hh:mm"
+                }))
+                views.setTextViewText(R.id.tvRightReminderTime, timeLabel)
+            } else {
+                views.setViewVisibility(R.id.containerRightReminder, View.GONE)
+            }
+
+            // ── Schedule ListView ──────────────────────────────────────────
+            val serviceIntent = Intent(context, OverviewRemoteViewsService::class.java).apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
+                data = android.net.Uri.fromParts("content", widgetId.toString(), null)
+            }
+            views.setRemoteAdapter(R.id.listSchedule, serviceIntent)
+        }
+    }
+
+    override fun onUpdate(context: Context, manager: AppWidgetManager, widgetIds: IntArray) {
+        for (id in widgetIds) updateWidget(context, manager, id)
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val manager = AppWidgetManager.getInstance(context)
+
+        when (intent.action) {
+            ACTION_SWITCH_TAB -> {
+                val id = intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                val showCal = intent.getBooleanExtra(EXTRA_SHOW_CALENDAR, false)
+                if (id != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    prefs.edit().putBoolean("$PREF_TAB$id", showCal).apply()
+                    updateWidget(context, manager, id)
+                }
+            }
+            ACTION_PREV_MONTH -> {
+                val id = intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                if (id != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    val cur = prefs.getString("$PREF_MONTH$id", null)
+                        ?.let { runCatching { YearMonth.parse(it) }.getOrNull() } ?: YearMonth.now()
+                    prefs.edit().putString("$PREF_MONTH$id", cur.minusMonths(1).toString()).apply()
+                    updateWidget(context, manager, id)
+                }
+            }
+            ACTION_NEXT_MONTH -> {
+                val id = intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+                if (id != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    val cur = prefs.getString("$PREF_MONTH$id", null)
+                        ?.let { runCatching { YearMonth.parse(it) }.getOrNull() } ?: YearMonth.now()
+                    prefs.edit().putString("$PREF_MONTH$id", cur.plusMonths(1).toString()).apply()
+                    updateWidget(context, manager, id)
+                }
+            }
+        }
+    }
+
+    override fun onDeleted(context: Context, widgetIds: IntArray) {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        for (id in widgetIds) {
+            prefs.edit()
+                .remove("$PREF_TAB$id")
+                .remove("$PREF_MONTH$id")
+                .apply()
+        }
+    }
+}

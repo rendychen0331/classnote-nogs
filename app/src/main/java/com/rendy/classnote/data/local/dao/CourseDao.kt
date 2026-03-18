@@ -30,4 +30,7 @@ interface CourseDao {
 
     @Query("SELECT DISTINCT semesterId FROM courses ORDER BY semesterId DESC")
     fun getAllSemesterIds(): Flow<List<String>>
+
+    @Query("SELECT * FROM courses WHERE semesterId = :semesterId AND dayOfWeek = :dayOfWeek ORDER BY period")
+    suspend fun getCoursesByDayOnce(semesterId: String, dayOfWeek: Int): List<CourseEntity>
 }

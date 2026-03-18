@@ -32,6 +32,12 @@
     <!-- Launcher icon background -->
     <color name="ic_launcher_background">#006874</color>
 
+    <!-- Reminder category chip colours -->
+    <color name="chip_work_color">#B2EBF2</color>
+    <color name="chip_homework_color">#C8E6C9</color>
+    <color name="chip_exam_color">#FFCDD2</color>
+    <color name="chip_reminder_color">#FFE0B2</color>
+
     <!-- Course cell colours -->
     <color name="course_color_1">#006874</color>
     <color name="course_color_2">#4A6267</color>

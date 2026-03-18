@@ -45,6 +45,26 @@
             </intent-filter>
         </receiver>
 
+        <!-- AppWidget -->
+        <receiver
+            android:name=".widget.ClassNoteWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.rendy.classnote.SWITCH_TAB" />
+                <action android:name="com.rendy.classnote.PREV_MONTH" />
+                <action android:name="com.rendy.classnote.NEXT_MONTH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/appwidget_info" />
+        </receiver>
+
+        <service
+            android:name=".widget.OverviewRemoteViewsService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
         <!-- WorkManager for background work -->
         <provider
             android:name="androidx.startup.InitializationProvider"

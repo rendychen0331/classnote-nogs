@@ -28,7 +28,10 @@ data class ReminderEntity(
     val title: String,
     val note: String = "",
     val courseId: Long? = null,    // null = 獨立提醒
-    val dueDate: String? = null,   // "yyyy-MM-dd" optional
+    val dueDate: String? = null,   // "yyyy-MM-dd" 結束日
     val isCompleted: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val category: String? = null,  // WORK / HOMEWORK / EXAM / REMINDER
+    val colorHex: String? = null,  // 自訂顏色，null 時依 category 套用
+    val startDate: String? = null  // "yyyy-MM-dd" 多天事件開始日，null 視為單日
 )

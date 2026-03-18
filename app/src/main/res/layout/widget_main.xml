@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp">
+
+    <!-- Tab bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#22FFFFFF"
+        android:padding="3dp">
+
+        <TextView
+            android:id="@+id/tabOverview"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="總覽"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:background="@drawable/widget_tab_selected" />
+
+        <TextView
+            android:id="@+id/tabCalendar"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="月曆"
+            android:textColor="#AAAACC"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/btnAdd"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:gravity="center"
+            android:text="+"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:background="#FF4081"
+            android:layout_marginStart="6dp" />
+
+    </LinearLayout>
+
+    <!-- Content: overview (default visible) -->
+    <LinearLayout
+        android:id="@+id/containerOverview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!-- NEXT course + right reminder (top card) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <!-- Left: NEXT + linked reminders -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNextLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NEXT: —"
+                    android:textColor="#4FC3F7"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/widget_next_bg"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp" />
+
+                <LinearLayout
+                    android:id="@+id/linkedReminder1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvLinkedCat1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10sp"
+                        android:paddingHorizontal="5dp"
+                        android:paddingVertical="2dp"
+                        android:background="@drawable/widget_chip_default" />
+
+                    <TextView
+                        android:id="@+id/tvLinkedTitle1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#E0E0E0"
+                        android:textSize="11sp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linkedReminder2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="3dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvLinkedCat2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10sp"
+                        android:paddingHorizontal="5dp"
+                        android:paddingVertical="2dp"
+                        android:background="@drawable/widget_chip_default" />
+
+                    <TextView
+                        android:id="@+id/tvLinkedTitle2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="#E0E0E0"
+                        android:textSize="11sp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#44FFFFFF"
+                android:layout_marginHorizontal="8dp" />
+
+            <!-- Right: upcoming reminder -->
+            <LinearLayout
+                android:id="@+id/containerRightReminder"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔔"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" 提醒"
+                        android:textColor="#FFA726"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvRightReminderTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#E0E0E0"
+                    android:textSize="11sp"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:layout_marginTop="2dp" />
+
+                <TextView
+                    android:id="@+id/tvRightReminderTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#AAAACC"
+                    android:textSize="10sp"
+                    android:layout_marginTop="1dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Separator -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#33FFFFFF"
+            android:layout_marginVertical="8dp" />
+
+        <!-- Section title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="接下來的排程"
+            android:textColor="#AAAACC"
+            android:textSize="11sp"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Schedule list -->
+        <ListView
+            android:id="@+id/listSchedule"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:scrollbars="none" />
+
+    </LinearLayout>
+
+    <!-- Content: calendar (hidden by default) -->
+    <LinearLayout
+        android:id="@+id/containerCalendar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Month header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="6dp">
+
+            <TextView
+                android:id="@+id/tvCalMonthYear"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="2026年 3月"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnCalPrev"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="‹"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/btnCalNext"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:gravity="center"
+                android:text="›"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <!-- Day headers -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                android:gravity="center" android:text="日" android:textColor="#EF5350" android:textSize="10sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                android:gravity="center" android:text="一" android:textColor="#AAAACC" android:textSize="10sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                android:gravity="center" android:text="二" android:textColor="#AAAACC" android:textSize="10sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                android:gravity="center" android:text="三" android:textColor="#AAAACC" android:textSize="10sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                android:gravity="center" android:text="四" android:textColor="#AAAACC" android:textSize="10sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                android:gravity="center" android:text="五" android:textColor="#AAAACC" android:textSize="10sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+                android:gravity="center" android:text="六" android:textColor="#4FC3F7" android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Calendar rows: 6 rows × 7 cells -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <TextView android:id="@+id/calCell00" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell01" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell02" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell03" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell04" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell05" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell06" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <TextView android:id="@+id/calCell07" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell08" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell09" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell10" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell11" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell12" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell13" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <TextView android:id="@+id/calCell14" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell15" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell16" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell17" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell18" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell19" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell20" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <TextView android:id="@+id/calCell21" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell22" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell23" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell24" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell25" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell26" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell27" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <TextView android:id="@+id/calCell28" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell29" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell30" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell31" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell32" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell33" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell34" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
+            <TextView android:id="@+id/calCell35" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell36" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell37" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell38" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell39" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell40" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+            <TextView android:id="@+id/calCell41" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="11sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

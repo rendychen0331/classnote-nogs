@@ -47,6 +47,58 @@
                 android:gravity="top" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <View android:layout_height="12dp" android:layout_width="match_parent" />
+
+        <!-- 分類 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reminder_category_label"
+            android:textAppearance="?attr/textAppearanceLabelLarge"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:singleSelection="true"
+            app:selectionRequired="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipWork"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_work"
+                app:chipBackgroundColor="@color/chip_work_color" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipHomework"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_homework"
+                app:chipBackgroundColor="@color/chip_homework_color" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipExam"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_exam"
+                app:chipBackgroundColor="@color/chip_exam_color" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReminder"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_reminder"
+                app:chipBackgroundColor="@color/chip_reminder_color" />
+
+        </com.google.android.material.chip.ChipGroup>
+
         <View android:layout_height="16dp" android:layout_width="match_parent" />
 
         <!-- 截止日期 -->

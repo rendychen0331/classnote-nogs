@@ -66,4 +66,15 @@ class CourseRepository(
 
     suspend fun updatePeriodTime(periodTime: PeriodTimeEntity) =
         periodTimeDao.insertOrUpdate(periodTime)
+
+    // ── Widget 用（suspend，非 Flow） ─────────────────────────────────────
+
+    suspend fun getCoursesForDayOnce(semesterId: String, dayOfWeek: Int): List<CourseEntity> =
+        courseDao.getCoursesByDayOnce(semesterId, dayOfWeek)
+
+    suspend fun getPeriodTimesOnce(): List<PeriodTimeEntity> =
+        periodTimeDao.getAllPeriodTimesOnce()
+
+    suspend fun getOverridesForDateOnce(date: String): List<CourseOverrideEntity> =
+        overrideDao.getOverridesByDateOnce(date)
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.rendy.classnote.data.local.dao.*
 import com.rendy.classnote.data.local.entity.*
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
         ReminderEntity::class,
         ReminderNotificationEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class ClassNoteDatabase : RoomDatabase() {
@@ -34,6 +35,14 @@ abstract class ClassNoteDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: ClassNoteDatabase? = null
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE reminders ADD COLUMN category TEXT")
+                db.execSQL("ALTER TABLE reminders ADD COLUMN colorHex TEXT")
+                db.execSQL("ALTER TABLE reminders ADD COLUMN startDate TEXT")
+            }
+        }
+
         fun getDatabase(context: Context): ClassNoteDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -42,6 +51,7 @@ abstract class ClassNoteDatabase : RoomDatabase() {
                     "classnote_database"
                 )
                     .addCallback(DatabaseCallback())
+                    .addMigrations(MIGRATION_2_3)
                     .fallbackToDestructiveMigrationFrom(1)
                     .build()
                 INSTANCE = instance

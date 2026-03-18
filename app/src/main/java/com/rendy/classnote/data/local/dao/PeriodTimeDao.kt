@@ -18,4 +18,7 @@ interface PeriodTimeDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(periodTimes: List<PeriodTimeEntity>)
+
+    @Query("SELECT * FROM period_times ORDER BY period")
+    suspend fun getAllPeriodTimesOnce(): List<PeriodTimeEntity>
 }

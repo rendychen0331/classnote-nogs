@@ -1,5 +1,7 @@
 package com.rendy.classnote.ui.reminder
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -8,6 +10,7 @@ import com.rendy.classnote.data.local.entity.ReminderEntity
 import com.rendy.classnote.data.local.entity.ReminderNotificationEntity
 import com.rendy.classnote.data.repository.ReminderRepository
 import com.rendy.classnote.notification.ReminderScheduler
+import com.rendy.classnote.widget.ClassNoteWidget
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +39,7 @@ class ReminderViewModel(
             val reminderId = repository.insertReminder(reminder)
             scheduleNotifications(reminderId, notificationTimes)
         }
+        notifyWidgets()
     }
 
     /** 更新提醒：先取消舊通知再重新排程 */
@@ -53,6 +57,7 @@ class ReminderViewModel(
             cancelPendingNotifications(reminder.id)
             scheduleNotifications(reminder.id, notificationTimes)
         }
+        notifyWidgets()
     }
 
     /** 標記完成（從列表消失），並取消所有未觸發通知 */
@@ -65,6 +70,12 @@ class ReminderViewModel(
     fun deleteReminder(reminder: ReminderEntity) = viewModelScope.launch {
         cancelPendingNotifications(reminder.id)
         repository.deleteReminder(reminder)
+    }
+
+    private fun notifyWidgets() {
+        val manager = AppWidgetManager.getInstance(appContext)
+        val ids = manager.getAppWidgetIds(ComponentName(appContext, ClassNoteWidget::class.java))
+        for (id in ids) ClassNoteWidget.updateWidget(appContext, manager, id)
     }
 
     private suspend fun scheduleNotifications(reminderId: Long, triggerTimes: List<Long>) {

@@ -30,4 +30,7 @@ interface ReminderDao {
 
     @Query("DELETE FROM reminders WHERE isCompleted = 1")
     suspend fun deleteCompletedReminders()
+
+    @Query("SELECT * FROM reminders WHERE isCompleted = 0 ORDER BY dueDate ASC, createdAt DESC")
+    suspend fun getActiveRemindersOnce(): List<ReminderEntity>
 }

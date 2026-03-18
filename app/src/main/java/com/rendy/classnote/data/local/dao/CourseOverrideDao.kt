@@ -24,4 +24,7 @@ interface CourseOverrideDao {
 
     @Query("DELETE FROM course_overrides WHERE courseId = :courseId AND date = :date")
     suspend fun deleteOverrideByDateAndCourse(courseId: Long, date: String)
+
+    @Query("SELECT * FROM course_overrides WHERE date = :date")
+    suspend fun getOverridesByDateOnce(date: String): List<CourseOverrideEntity>
 }

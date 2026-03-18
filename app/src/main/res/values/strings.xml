@@ -66,6 +66,17 @@
     <string name="confirm_delete">確認刪除</string>
     <string name="confirm_delete_message">確定要刪除此項目嗎？</string>
 
+    <!-- Widget -->
+    <string name="widget_description">ClassNote 課表與提醒 Widget</string>
+
+    <!-- Reminder categories -->
+    <string name="category_none">無分類</string>
+    <string name="category_work">工作</string>
+    <string name="category_homework">作業</string>
+    <string name="category_exam">考試</string>
+    <string name="category_reminder">提醒</string>
+    <string name="reminder_category_label">分類</string>
+
     <!-- Notifications -->
     <string name="notification_channel_name">提醒事項通知</string>
     <string name="notification_channel_description">ClassNote 提醒事項推播通知</string>
