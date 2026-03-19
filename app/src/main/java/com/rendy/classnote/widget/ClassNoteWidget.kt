@@ -7,7 +7,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
-import androidx.preference.PreferenceManager
+// Use context.getSharedPreferences directly (no preference-ktx dependency needed)
 import com.rendy.classnote.R
 import com.rendy.classnote.data.local.ClassNoteDatabase
 import com.rendy.classnote.data.model.ReminderCategory
@@ -30,7 +30,19 @@ class ClassNoteWidget : AppWidgetProvider() {
         const val PREF_MONTH = "widget_month_"
 
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
-            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+            try {
+                updateWidgetInternal(context, manager, widgetId)
+            } catch (_: Exception) {
+                // 任何未預期的例外：顯示空白 widget 避免「載入小工具時發生問題」
+                try {
+                    val views = RemoteViews(context.packageName, R.layout.widget_main)
+                    manager.updateAppWidget(widgetId, views)
+                } catch (_: Exception) {}
+            }
+        }
+
+        private fun updateWidgetInternal(context: Context, manager: AppWidgetManager, widgetId: Int) {
+            val prefs = context.getSharedPreferences("classnote_widget", Context.MODE_PRIVATE)
             val showCalendar = prefs.getBoolean("$PREF_TAB$widgetId", false)
             val yearMonthStr = prefs.getString("$PREF_MONTH$widgetId", null)
             val yearMonth = yearMonthStr?.let {
@@ -96,18 +108,23 @@ class ClassNoteWidget : AppWidgetProvider() {
             }
 
             // ── Load data ──────────────────────────────────────────────────
-            runBlocking {
-                val db = ClassNoteDatabase.getDatabase(context)
+            try {
+                runBlocking {
+                    val db = ClassNoteDatabase.getDatabase(context)
 
-                if (!showCalendar) {
-                    populateOverview(context, views, db, widgetId)
-                } else {
-                    val reminders = db.reminderDao().getActiveRemindersOnce()
-                    CalendarWidgetHelper.populate(views, yearMonth, reminders)
+                    if (!showCalendar) {
+                        populateOverview(context, views, db, widgetId)
+                    } else {
+                        val reminders = db.reminderDao().getActiveRemindersOnce()
+                        CalendarWidgetHelper.populate(views, yearMonth, reminders)
+                    }
                 }
+            } catch (_: Exception) {
+                // 資料載入失敗時仍更新 widget（顯示空白狀態）
             }
 
             manager.updateAppWidget(widgetId, views)
+            manager.notifyAppWidgetViewDataChanged(widgetId, R.id.listSchedule)
         }
 
         private suspend fun populateOverview(
@@ -215,7 +232,7 @@ class ClassNoteWidget : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val prefs = context.getSharedPreferences("classnote_widget", Context.MODE_PRIVATE)
         val manager = AppWidgetManager.getInstance(context)
 
         when (intent.action) {
@@ -249,7 +266,7 @@ class ClassNoteWidget : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, widgetIds: IntArray) {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val prefs = context.getSharedPreferences("classnote_widget", Context.MODE_PRIVATE)
         for (id in widgetIds) {
             prefs.edit()
                 .remove("$PREF_TAB$id")

@@ -20,7 +20,9 @@ class OverviewRemoteViewsFactory(
     private val widgetId: Int
 ) : RemoteViewsService.RemoteViewsFactory {
 
-    private val db = ClassNoteDatabase.getDatabase(context)
+    private val db: ClassNoteDatabase? by lazy {
+        try { ClassNoteDatabase.getDatabase(context) } catch (_: Exception) { null }
+    }
     private var items: List<ScheduleItem> = emptyList()
 
     data class ScheduleItem(
@@ -33,27 +35,31 @@ class OverviewRemoteViewsFactory(
     override fun onCreate() {}
 
     override fun onDataSetChanged() {
-        items = runBlocking {
-            val today = LocalDate.now()
-            val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
-            val tomorrowStr = today.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)
-            val nowMs = System.currentTimeMillis()
+        items = try {
+            val database = db ?: return
+            runBlocking {
+                val today = LocalDate.now()
+                val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                val tomorrowStr = today.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)
 
-            val reminders = db.reminderDao().getActiveRemindersOnce()
-            val notifications = db.reminderNotificationDao().getAllPendingNotifications()
-            val notifMap = notifications.groupBy { it.reminderId }
+                val reminders = database.reminderDao().getActiveRemindersOnce()
+                val notifications = database.reminderNotificationDao().getAllPendingNotifications()
+                val notifMap = notifications.groupBy { it.reminderId }
 
-            buildList {
-                for (r in reminders) {
-                    val timeLabel = buildTimeLabel(r, notifMap[r.id]?.minByOrNull { it.triggerAt }?.triggerAt, todayStr, tomorrowStr, nowMs)
-                    add(ScheduleItem(
-                        title = r.title,
-                        category = r.category,
-                        timeLabel = timeLabel,
-                        isNotification = r.category == ReminderCategory.REMINDER.name
-                    ))
+                buildList {
+                    for (r in reminders) {
+                        val timeLabel = buildTimeLabel(r, notifMap[r.id]?.minByOrNull { it.triggerAt }?.triggerAt, todayStr, tomorrowStr)
+                        add(ScheduleItem(
+                            title = r.title,
+                            category = r.category,
+                            timeLabel = timeLabel,
+                            isNotification = r.category == ReminderCategory.REMINDER.name
+                        ))
+                    }
                 }
             }
+        } catch (_: Exception) {
+            emptyList()
         }
     }
 
@@ -61,8 +67,7 @@ class OverviewRemoteViewsFactory(
         r: ReminderEntity,
         nextTrigger: Long?,
         todayStr: String,
-        tomorrowStr: String,
-        nowMs: Long
+        tomorrowStr: String
     ): String {
         if (nextTrigger != null) {
             val dt = LocalDateTime.ofInstant(
@@ -92,33 +97,37 @@ class OverviewRemoteViewsFactory(
     override fun getCount() = items.size
 
     override fun getViewAt(position: Int): RemoteViews {
-        val item = items.getOrNull(position)
-            ?: return RemoteViews(context.packageName, R.layout.widget_item_schedule)
+        return try {
+            val item = items.getOrNull(position)
+                ?: return RemoteViews(context.packageName, R.layout.widget_item_schedule)
 
-        val views = RemoteViews(context.packageName, R.layout.widget_item_schedule)
+            val views = RemoteViews(context.packageName, R.layout.widget_item_schedule)
 
-        views.setTextViewText(R.id.tvTitle, item.title)
-        views.setTextViewText(R.id.tvTime, item.timeLabel)
+            views.setTextViewText(R.id.tvTitle, item.title)
+            views.setTextViewText(R.id.tvTime, item.timeLabel)
 
-        if (item.isNotification) {
-            views.setTextViewText(R.id.tvIcon, "🔔")
-            views.setTextColor(R.id.tvIcon, Color.parseColor("#FFA726"))
-            views.setViewVisibility(R.id.tvCategory, View.GONE)
-        } else {
-            views.setTextViewText(R.id.tvIcon, "○")
-            views.setTextColor(R.id.tvIcon, Color.parseColor("#AAAACC"))
-
-            val cat = ReminderCategory.fromString(item.category)
-            if (cat != null) {
-                views.setViewVisibility(R.id.tvCategory, View.VISIBLE)
-                views.setTextViewText(R.id.tvCategory, cat.label)
-                views.setInt(R.id.tvCategory, "setBackgroundResource", chipDrawableRes(cat))
-            } else {
+            if (item.isNotification) {
+                views.setTextViewText(R.id.tvIcon, "🔔")
+                views.setTextColor(R.id.tvIcon, Color.parseColor("#FFA726"))
                 views.setViewVisibility(R.id.tvCategory, View.GONE)
-            }
-        }
+            } else {
+                views.setTextViewText(R.id.tvIcon, "○")
+                views.setTextColor(R.id.tvIcon, Color.parseColor("#AAAACC"))
 
-        return views
+                val cat = ReminderCategory.fromString(item.category)
+                if (cat != null) {
+                    views.setViewVisibility(R.id.tvCategory, View.VISIBLE)
+                    views.setTextViewText(R.id.tvCategory, cat.label)
+                    views.setInt(R.id.tvCategory, "setBackgroundResource", chipDrawableRes(cat))
+                } else {
+                    views.setViewVisibility(R.id.tvCategory, View.GONE)
+                }
+            }
+
+            views
+        } catch (_: Exception) {
+            RemoteViews(context.packageName, R.layout.widget_item_schedule)
+        }
     }
 
     private fun chipDrawableRes(cat: ReminderCategory) = when (cat) {

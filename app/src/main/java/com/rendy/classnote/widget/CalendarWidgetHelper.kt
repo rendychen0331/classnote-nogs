@@ -76,7 +76,7 @@ object CalendarWidgetHelper {
 
                 // Background: first event color if any
                 if (!colors.isNullOrEmpty()) {
-                    views.setInt(cellId, "setBackgroundColor", Color.parseColor(colors[0] + "99"))
+                    views.setInt(cellId, "setBackgroundColor", Color.parseColor("#99" + colors[0].removePrefix("#")))
                 } else {
                     views.setInt(cellId, "setBackgroundColor", Color.TRANSPARENT)
                 }
