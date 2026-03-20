@@ -56,4 +56,15 @@
             android:layout_marginTop="1dp" />
     </LinearLayout>
 
+    <!-- Complete button -->
+    <TextView
+        android:id="@+id/btnComplete"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:gravity="center"
+        android:text="✓"
+        android:textColor="#66BB6A"
+        android:textSize="16sp"
+        android:background="#22FFFFFF" />
+
 </LinearLayout>

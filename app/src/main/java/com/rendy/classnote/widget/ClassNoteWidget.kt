@@ -8,9 +8,11 @@ import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 // Use context.getSharedPreferences directly (no preference-ktx dependency needed)
+import android.content.ComponentName
 import com.rendy.classnote.R
 import com.rendy.classnote.data.local.ClassNoteDatabase
 import com.rendy.classnote.data.model.ReminderCategory
+import com.rendy.classnote.notification.ReminderScheduler
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.time.LocalDate
@@ -25,8 +27,10 @@ class ClassNoteWidget : AppWidgetProvider() {
         const val ACTION_SWITCH_TAB = "com.rendy.classnote.SWITCH_TAB"
         const val ACTION_PREV_MONTH = "com.rendy.classnote.PREV_MONTH"
         const val ACTION_NEXT_MONTH = "com.rendy.classnote.NEXT_MONTH"
+        const val ACTION_COMPLETE_REMINDER = "com.rendy.classnote.COMPLETE_REMINDER"
         const val EXTRA_WIDGET_ID = "widget_id"
         const val EXTRA_SHOW_CALENDAR = "show_calendar"
+        const val EXTRA_REMINDER_ID = "reminder_id"
         const val PREF_TAB = "widget_tab_"
         const val PREF_MONTH = "widget_month_"
 
@@ -232,6 +236,15 @@ class ClassNoteWidget : AppWidgetProvider() {
                 data = android.net.Uri.fromParts("content", widgetId.toString(), null)
             }
             views.setRemoteAdapter(R.id.listSchedule, serviceIntent)
+
+            // 設定 ListView 項目點擊模板（完成提醒事項）
+            val completeTemplate = Intent(context, ClassNoteWidget::class.java).apply {
+                action = ACTION_COMPLETE_REMINDER
+                putExtra(EXTRA_WIDGET_ID, widgetId)
+            }
+            views.setPendingIntentTemplate(R.id.listSchedule,
+                android.app.PendingIntent.getBroadcast(context, widgetId * 10 + 5, completeTemplate,
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE))
         }
     }
 
@@ -269,6 +282,29 @@ class ClassNoteWidget : AppWidgetProvider() {
                         ?.let { runCatching { YearMonth.parse(it) }.getOrNull() } ?: YearMonth.now()
                     prefs.edit().putString("$PREF_MONTH$id", cur.plusMonths(1).toString()).apply()
                     updateWidget(context, manager, id)
+                }
+            }
+            ACTION_COMPLETE_REMINDER -> {
+                val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID, -1L)
+                if (reminderId > 0) {
+                    try {
+                        runBlocking {
+                            withTimeout(3000L) {
+                                val db = ClassNoteDatabase.getDatabase(context)
+                                // 取消未觸發的通知鬧鐘
+                                val pending = db.reminderNotificationDao()
+                                    .getNotificationsOnce(reminderId)
+                                    .filter { !it.isFired }
+                                pending.forEach { ReminderScheduler.cancelNotification(context, it.id) }
+                                db.reminderNotificationDao().deleteNotificationsForReminder(reminderId)
+                                // 標記完成
+                                db.reminderDao().markCompleted(reminderId)
+                            }
+                        }
+                    } catch (_: Exception) {}
+                    // 刷新所有 widget
+                    val ids = manager.getAppWidgetIds(ComponentName(context, ClassNoteWidget::class.java))
+                    for (id in ids) updateWidget(context, manager, id)
                 }
             }
         }

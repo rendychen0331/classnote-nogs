@@ -54,6 +54,7 @@
                 <action android:name="com.rendy.classnote.SWITCH_TAB" />
                 <action android:name="com.rendy.classnote.PREV_MONTH" />
                 <action android:name="com.rendy.classnote.NEXT_MONTH" />
+                <action android:name="com.rendy.classnote.COMPLETE_REMINDER" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

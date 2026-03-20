@@ -1,6 +1,7 @@
 package com.rendy.classnote.widget
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
@@ -26,6 +27,7 @@ class OverviewRemoteViewsFactory(
     private var items: List<ScheduleItem> = emptyList()
 
     data class ScheduleItem(
+        val reminderId: Long,
         val title: String,
         val category: String?,
         val timeLabel: String,
@@ -50,6 +52,7 @@ class OverviewRemoteViewsFactory(
                     for (r in reminders) {
                         val timeLabel = buildTimeLabel(r, notifMap[r.id]?.minByOrNull { it.triggerAt }?.triggerAt, todayStr, tomorrowStr)
                         add(ScheduleItem(
+                            reminderId = r.id,
                             title = r.title,
                             category = r.category,
                             timeLabel = timeLabel,
@@ -123,6 +126,12 @@ class OverviewRemoteViewsFactory(
                     views.setViewVisibility(R.id.tvCategory, View.GONE)
                 }
             }
+
+            // 勾選完成按鈕：fill-in intent 攜帶 reminder ID
+            val fillIntent = Intent().apply {
+                putExtra(ClassNoteWidget.EXTRA_REMINDER_ID, item.reminderId)
+            }
+            views.setOnClickFillInIntent(R.id.btnComplete, fillIntent)
 
             views
         } catch (_: Exception) {
