@@ -93,7 +93,10 @@ class CourseEditFragment : Fragment() {
         binding.btnSave.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
             val repo = (requireActivity().application as ClassNoteApplication).courseRepository
-            val course = repo.getCourseById(courseId) ?: return@launch
+            val course = repo.getCourseById(courseId) ?: run {
+                binding.btnSave.isEnabled = true
+                return@launch
+            }
             binding.etName.setText(course.name)
             binding.etTeacher.setText(course.teacher)
             binding.etRoom.setText(course.room)

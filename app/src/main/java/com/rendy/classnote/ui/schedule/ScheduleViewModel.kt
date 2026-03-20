@@ -17,13 +17,18 @@ import java.util.Calendar
 
 class ScheduleViewModel(private val repository: CourseRepository) : ViewModel() {
 
-    // 目前學期（格式 "YYYY-S"）：依現實時間動態計算，8月以後為第2學期
+    // 目前學期（格式 "YYYY-S"）：學期約在 2 月底、8 月底開始，以 20 日為切換點
     val currentSemesterId = MutableStateFlow(run {
         val cal = Calendar.getInstance()
         val year = cal.get(Calendar.YEAR)
-        val month = cal.get(Calendar.MONTH) + 1 // 1-based
-        val semester = if (month >= 8) 2 else 1
-        "$year-$semester"
+        val month = cal.get(Calendar.MONTH) + 1
+        val day = cal.get(Calendar.DAY_OF_MONTH)
+        val (semYear, semester) = when {
+            month > 8 || (month == 8 && day >= 20) -> year to 2
+            month > 2 || (month == 2 && day >= 20) -> year to 1
+            else -> (year - 1) to 2  // 1月~2月中旬：上一年第二學期
+        }
+        "$semYear-$semester"
     })
 
     val courses: StateFlow<List<CourseEntity>> = currentSemesterId

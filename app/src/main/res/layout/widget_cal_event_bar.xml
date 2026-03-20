@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="18dp"
+    android:orientation="horizontal"
+    android:layout_marginTop="1dp">
+
+    <TextView android:id="@+id/evCol0"
+        android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="9sp"
+        android:maxLines="1" android:ellipsize="end" android:paddingHorizontal="2dp"
+        android:visibility="invisible" />
+    <TextView android:id="@+id/evCol1"
+        android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="9sp"
+        android:maxLines="1" android:ellipsize="end" android:paddingHorizontal="2dp"
+        android:visibility="invisible" />
+    <TextView android:id="@+id/evCol2"
+        android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="9sp"
+        android:maxLines="1" android:ellipsize="end" android:paddingHorizontal="2dp"
+        android:visibility="invisible" />
+    <TextView android:id="@+id/evCol3"
+        android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="9sp"
+        android:maxLines="1" android:ellipsize="end" android:paddingHorizontal="2dp"
+        android:visibility="invisible" />
+    <TextView android:id="@+id/evCol4"
+        android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="9sp"
+        android:maxLines="1" android:ellipsize="end" android:paddingHorizontal="2dp"
+        android:visibility="invisible" />
+    <TextView android:id="@+id/evCol5"
+        android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="9sp"
+        android:maxLines="1" android:ellipsize="end" android:paddingHorizontal="2dp"
+        android:visibility="invisible" />
+    <TextView android:id="@+id/evCol6"
+        android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="9sp"
+        android:maxLines="1" android:ellipsize="end" android:paddingHorizontal="2dp"
+        android:visibility="invisible" />
+</LinearLayout>

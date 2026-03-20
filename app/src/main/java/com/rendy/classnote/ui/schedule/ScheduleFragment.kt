@@ -62,7 +62,8 @@ class ScheduleFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.semesterIds.collect { semesters ->
-                    val list = if (semesters.isEmpty()) listOf(viewModel.currentSemesterId.value) else semesters
+                    val current = viewModel.currentSemesterId.value
+                    val list = (semesters + current).distinct()
                     val adapter = ArrayAdapter(
                         requireContext(),
                         android.R.layout.simple_dropdown_item_1line,
@@ -70,7 +71,6 @@ class ScheduleFragment : Fragment() {
                     )
                     binding.spinnerSemester.setAdapter(adapter)
                     // 顯示目前學期
-                    val current = viewModel.currentSemesterId.value
                     if (binding.spinnerSemester.text.toString() != current) {
                         binding.spinnerSemester.setText(current, false)
                     }

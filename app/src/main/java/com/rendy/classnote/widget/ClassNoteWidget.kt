@@ -116,7 +116,7 @@ class ClassNoteWidget : AppWidgetProvider() {
                         populateOverview(context, views, db, widgetId)
                     } else {
                         val reminders = db.reminderDao().getActiveRemindersOnce()
-                        CalendarWidgetHelper.populate(views, yearMonth, reminders)
+                        CalendarWidgetHelper.populate(context, views, yearMonth, reminders)
                     }
                 }
             } catch (_: Exception) {
@@ -134,11 +134,17 @@ class ClassNoteWidget : AppWidgetProvider() {
             widgetId: Int
         ) {
             // ── Determine current semester ID ──────────────────────────────
+            // 學期約在 2 月底、8 月底開始，以 20 日為切換點
             val cal = Calendar.getInstance()
             val year = cal.get(Calendar.YEAR)
             val month = cal.get(Calendar.MONTH) + 1
-            val semester = if (month >= 8) 2 else 1
-            val semesterId = "$year-$semester"
+            val day = cal.get(Calendar.DAY_OF_MONTH)
+            val (semYear, semester) = when {
+                month > 8 || (month == 8 && day >= 20) -> year to 2
+                month > 2 || (month == 2 && day >= 20) -> year to 1
+                else -> (year - 1) to 2  // 1月~2月中旬：上一年第二學期
+            }
+            val semesterId = "$semYear-$semester"
 
             // ── Find next course ───────────────────────────────────────────
             val today = LocalDate.now()
@@ -209,9 +215,8 @@ class ClassNoteWidget : AppWidgetProvider() {
                     java.time.Instant.ofEpochMilli(soonestNotif.triggerAt),
                     java.time.ZoneId.systemDefault()
                 )
-                val timeLabel = dt.format(DateTimeFormatter.ofPattern("上午/下午 HH:mm".let {
-                    if (dt.hour < 12) "上午 hh:mm" else "下午 hh:mm"
-                }))
+                val pattern = if (dt.hour < 12) "上午 hh:mm" else "下午 hh:mm"
+                val timeLabel = dt.format(DateTimeFormatter.ofPattern(pattern))
                 views.setTextViewText(R.id.tvRightReminderTime, timeLabel)
             } else {
                 views.setViewVisibility(R.id.containerRightReminder, View.GONE)
