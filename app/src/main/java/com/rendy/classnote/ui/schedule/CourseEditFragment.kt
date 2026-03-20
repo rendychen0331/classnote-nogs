@@ -160,7 +160,7 @@ class CourseEditFragment : Fragment() {
 
         val course = CourseEntity(
             id = if (args.courseId > 0) args.courseId else 0,
-            semesterId = args.semesterId,
+            semesterId = args.semesterId.ifEmpty { viewModel.currentSemesterId.value },
             dayOfWeek = selectedIndex(binding.spinnerDay, days) + 1,
             period = selectedIndex(binding.spinnerPeriod, periods) + 1,
             name = name,
@@ -169,10 +169,12 @@ class CourseEditFragment : Fragment() {
             colorHex = selectedColorHex
         )
 
-        if (args.courseId > 0) viewModel.updateCourse(course)
-        else viewModel.addCourse(course)
-
-        findNavController().popBackStack()
+        binding.btnSave.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (args.courseId > 0) viewModel.updateCourse(course)
+            else viewModel.addCourse(course)
+            findNavController().popBackStack()
+        }
     }
 
     override fun onDestroyView() {

@@ -45,11 +45,11 @@ class ScheduleViewModel(private val repository: CourseRepository) : ViewModel() 
         currentSemesterId.value = semesterId
     }
 
-    fun addCourse(course: CourseEntity) = viewModelScope.launch {
+    suspend fun addCourse(course: CourseEntity) {
         repository.insertCourse(course)
     }
 
-    fun updateCourse(course: CourseEntity) = viewModelScope.launch {
+    suspend fun updateCourse(course: CourseEntity) {
         repository.updateCourse(course)
     }
 
