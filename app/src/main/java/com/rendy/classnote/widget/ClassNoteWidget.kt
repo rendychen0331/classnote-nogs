@@ -12,6 +12,7 @@ import com.rendy.classnote.R
 import com.rendy.classnote.data.local.ClassNoteDatabase
 import com.rendy.classnote.data.model.ReminderCategory
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -110,17 +111,20 @@ class ClassNoteWidget : AppWidgetProvider() {
             // ── Load data ──────────────────────────────────────────────────
             try {
                 runBlocking {
-                    val db = ClassNoteDatabase.getDatabase(context)
+                    // 限時 5 秒，避免 DB 查詢過慢導致 ANR
+                    withTimeout(5000L) {
+                        val db = ClassNoteDatabase.getDatabase(context)
 
-                    if (!showCalendar) {
-                        populateOverview(context, views, db, widgetId)
-                    } else {
-                        val reminders = db.reminderDao().getActiveRemindersOnce()
-                        CalendarWidgetHelper.populate(context, views, yearMonth, reminders)
+                        if (!showCalendar) {
+                            populateOverview(context, views, db, widgetId)
+                        } else {
+                            val reminders = db.reminderDao().getActiveRemindersOnce()
+                            CalendarWidgetHelper.populate(context, views, yearMonth, reminders)
+                        }
                     }
                 }
             } catch (_: Exception) {
-                // 資料載入失敗時仍更新 widget（顯示空白狀態）
+                // 資料載入失敗或逾時：仍更新 widget（顯示空白狀態）
             }
 
             manager.updateAppWidget(widgetId, views)

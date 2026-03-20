@@ -35,6 +35,12 @@ abstract class ClassNoteDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: ClassNoteDatabase? = null
 
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // v1→v2 無 schema 變更，空 migration 避免 destructive fallback
+            }
+        }
+
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE reminders ADD COLUMN category TEXT")
@@ -51,8 +57,7 @@ abstract class ClassNoteDatabase : RoomDatabase() {
                     "classnote_database"
                 )
                     .addCallback(DatabaseCallback())
-                    .addMigrations(MIGRATION_2_3)
-                    .fallbackToDestructiveMigrationFrom(1)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

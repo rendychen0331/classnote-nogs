@@ -2,6 +2,7 @@ package com.rendy.classnote.ui.schedule
 
 import android.graphics.Color
 import android.os.Bundle
+import android.widget.Toast
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -94,6 +95,7 @@ class CourseEditFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val repo = (requireActivity().application as ClassNoteApplication).courseRepository
             val course = repo.getCourseById(courseId) ?: run {
+                Toast.makeText(requireContext(), "找不到此課程", Toast.LENGTH_SHORT).show()
                 binding.btnSave.isEnabled = true
                 return@launch
             }

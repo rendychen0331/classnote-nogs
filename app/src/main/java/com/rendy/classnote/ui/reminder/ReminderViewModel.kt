@@ -62,14 +62,22 @@ class ReminderViewModel(
 
     /** 標記完成（從列表消失），並取消所有未觸發通知 */
     fun completeReminder(reminderId: Long) = viewModelScope.launch {
-        repository.markCompleted(reminderId)
-        cancelPendingNotifications(reminderId)
+        try {
+            repository.markCompleted(reminderId)
+            cancelPendingNotifications(reminderId)
+        } catch (e: Exception) {
+            android.util.Log.e("ReminderViewModel", "completeReminder failed", e)
+        }
     }
 
     /** 刪除提醒 */
     fun deleteReminder(reminder: ReminderEntity) = viewModelScope.launch {
-        cancelPendingNotifications(reminder.id)
-        repository.deleteReminder(reminder)
+        try {
+            cancelPendingNotifications(reminder.id)
+            repository.deleteReminder(reminder)
+        } catch (e: Exception) {
+            android.util.Log.e("ReminderViewModel", "deleteReminder failed", e)
+        }
     }
 
     private fun notifyWidgets() {
