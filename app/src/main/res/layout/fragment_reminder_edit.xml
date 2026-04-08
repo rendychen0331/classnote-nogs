@@ -71,6 +71,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/category_work"
+                android:textColor="#1A1A1A"
                 app:chipBackgroundColor="@color/chip_work_color" />
 
             <com.google.android.material.chip.Chip
@@ -79,6 +80,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/category_homework"
+                android:textColor="#1A1A1A"
                 app:chipBackgroundColor="@color/chip_homework_color" />
 
             <com.google.android.material.chip.Chip
@@ -87,6 +89,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/category_exam"
+                android:textColor="#FFFFFF"
                 app:chipBackgroundColor="@color/chip_exam_color" />
 
             <com.google.android.material.chip.Chip
@@ -95,6 +98,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/category_reminder"
+                android:textColor="#1A1A1A"
                 app:chipBackgroundColor="@color/chip_reminder_color" />
 
         </com.google.android.material.chip.ChipGroup>

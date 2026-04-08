@@ -1,5 +1,7 @@
 package com.rendy.classnote.ui.reminder
 
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,6 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.rendy.classnote.data.local.entity.ReminderEntity
+import com.rendy.classnote.data.model.ReminderCategory
 import com.rendy.classnote.databinding.ItemReminderBinding
 
 class ReminderAdapter(
@@ -34,6 +37,21 @@ class ReminderAdapter(
             } else {
                 binding.tvDueDate.visibility = View.VISIBLE
                 binding.tvDueDate.text = due
+            }
+
+            // Accent bar + category chip
+            val cat = ReminderCategory.fromString(item.category)
+            val accentColor = Color.parseColor(ReminderCategory.colorFor(item.category))
+            binding.viewAccentBar.setBackgroundColor(accentColor)
+
+            if (cat != null) {
+                binding.tvCategory.visibility = View.VISIBLE
+                binding.tvCategory.text = cat.label
+                // Tint the rounded-rect chip background with the category color
+                val bg = binding.tvCategory.background.mutate() as? GradientDrawable
+                bg?.setColor(accentColor)
+            } else {
+                binding.tvCategory.visibility = View.GONE
             }
 
             binding.checkboxDone.isChecked = item.isCompleted

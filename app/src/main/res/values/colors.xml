@@ -1,49 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material Design 3 — Teal primary, light mode only -->
-    <color name="md_theme_light_primary">#006874</color>
-    <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#97F0FF</color>
-    <color name="md_theme_light_onPrimaryContainer">#001F24</color>
-    <color name="md_theme_light_secondary">#4A6267</color>
-    <color name="md_theme_light_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_secondaryContainer">#CCE8ED</color>
-    <color name="md_theme_light_onSecondaryContainer">#051F23</color>
-    <color name="md_theme_light_tertiary">#525E7D</color>
-    <color name="md_theme_light_onTertiary">#FFFFFF</color>
-    <color name="md_theme_light_tertiaryContainer">#DAE2FF</color>
-    <color name="md_theme_light_onTertiaryContainer">#0E1B37</color>
-    <color name="md_theme_light_error">#BA1A1A</color>
-    <color name="md_theme_light_onError">#FFFFFF</color>
-    <color name="md_theme_light_errorContainer">#FFDAD6</color>
-    <color name="md_theme_light_onErrorContainer">#410002</color>
-    <color name="md_theme_light_background">#FBFCFC</color>
-    <color name="md_theme_light_onBackground">#191C1D</color>
-    <color name="md_theme_light_surface">#FBFCFC</color>
-    <color name="md_theme_light_onSurface">#191C1D</color>
-    <color name="md_theme_light_surfaceVariant">#DBE4E6</color>
-    <color name="md_theme_light_onSurfaceVariant">#3F484A</color>
-    <color name="md_theme_light_outline">#6F797B</color>
-    <color name="md_theme_light_outlineVariant">#BFC8CA</color>
-    <color name="md_theme_light_inverseSurface">#2D3132</color>
-    <color name="md_theme_light_inverseOnSurface">#EFF1F1</color>
-    <color name="md_theme_light_inversePrimary">#4FD8EB</color>
+    <!-- ClassNote Midnight — Dark Theme Colors -->
+    <color name="cn_primary">#4ECCA3</color>
+    <color name="cn_on_primary">#003829</color>
+    <color name="cn_primary_container">#005C44</color>
+    <color name="cn_on_primary_container">#80F8CC</color>
+
+    <color name="cn_secondary">#B8BCC8</color>
+    <color name="cn_on_secondary">#292D3C</color>
+    <color name="cn_secondary_container">#3F4354</color>
+    <color name="cn_on_secondary_container">#D4D8E5</color>
+
+    <color name="cn_tertiary">#77DFFF</color>
+    <color name="cn_on_tertiary">#004E5F</color>
+    <color name="cn_tertiary_container">#006D84</color>
+    <color name="cn_on_tertiary_container">#C0F0FF</color>
+
+    <color name="cn_error">#FF716C</color>
+    <color name="cn_on_error">#490006</color>
+    <color name="cn_error_container">#9F0519</color>
+    <color name="cn_on_error_container">#FFA8A3</color>
+
+    <color name="cn_background">#0C0C1F</color>
+    <color name="cn_on_background">#E5E3FF</color>
+
+    <color name="cn_surface">#0C0C1F</color>
+    <color name="cn_on_surface">#E5E3FF</color>
+    <color name="cn_surface_variant">#23233F</color>
+    <color name="cn_on_surface_variant">#AAA8C3</color>
+
+    <color name="cn_surface_container_lowest">#000000</color>
+    <color name="cn_surface_container_low">#111127</color>
+    <color name="cn_surface_container">#17172F</color>
+    <color name="cn_surface_container_high">#1D1D37</color>
+    <color name="cn_surface_container_highest">#23233F</color>
+
+    <color name="cn_outline">#74738B</color>
+    <color name="cn_outline_variant">#46465C</color>
+
+    <color name="cn_inverse_surface">#E5E3FF</color>
+    <color name="cn_inverse_on_surface">#17172F</color>
+    <color name="cn_inverse_primary">#005C44</color>
 
     <!-- Launcher icon background -->
-    <color name="ic_launcher_background">#006874</color>
+    <color name="ic_launcher_background">#0C0C1F</color>
 
-    <!-- Reminder category chip colours -->
-    <color name="chip_work_color">#B2EBF2</color>
-    <color name="chip_homework_color">#C8E6C9</color>
-    <color name="chip_exam_color">#FFCDD2</color>
-    <color name="chip_reminder_color">#FFE0B2</color>
+    <!-- Reminder category accent colors (accent bars and chips) -->
+    <color name="chip_work_color">#FFA726</color>
+    <color name="chip_homework_color">#66BB6A</color>
+    <color name="chip_exam_color">#EF5350</color>
+    <color name="chip_reminder_color">#4ECCA3</color>
 
-    <!-- Course cell colours -->
-    <color name="course_color_1">#006874</color>
-    <color name="course_color_2">#4A6267</color>
-    <color name="course_color_3">#525E7D</color>
-    <color name="course_color_4">#6B4FA0</color>
-    <color name="course_color_5">#904D00</color>
-    <color name="course_color_6">#006E1C</color>
-    <color name="course_color_7">#984061</color>
+    <!-- Course cell colors -->
+    <color name="course_color_1">#4CAF50</color>
+    <color name="course_color_2">#2196F3</color>
+    <color name="course_color_3">#FF9800</color>
+    <color name="course_color_4">#9C27B0</color>
+    <color name="course_color_5">#F44336</color>
+    <color name="course_color_6">#00BCD4</color>
+    <color name="course_color_7">#E91E63</color>
 </resources>

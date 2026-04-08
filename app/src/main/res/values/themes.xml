@@ -1,30 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.ClassNote" parent="Theme.Material3.Light.NoActionBar">
-        <item name="colorPrimary">@color/md_theme_light_primary</item>
-        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
-        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
-        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
-        <item name="colorSecondary">@color/md_theme_light_secondary</item>
-        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
-        <item name="colorSecondaryContainer">@color/md_theme_light_secondaryContainer</item>
-        <item name="colorOnSecondaryContainer">@color/md_theme_light_onSecondaryContainer</item>
-        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
-        <item name="colorOnTertiary">@color/md_theme_light_onTertiary</item>
-        <item name="colorTertiaryContainer">@color/md_theme_light_tertiaryContainer</item>
-        <item name="colorOnTertiaryContainer">@color/md_theme_light_onTertiaryContainer</item>
-        <item name="colorError">@color/md_theme_light_error</item>
-        <item name="colorOnError">@color/md_theme_light_onError</item>
-        <item name="colorErrorContainer">@color/md_theme_light_errorContainer</item>
-        <item name="colorOnErrorContainer">@color/md_theme_light_onErrorContainer</item>
-        <item name="android:colorBackground">@color/md_theme_light_background</item>
-        <item name="colorOnBackground">@color/md_theme_light_onBackground</item>
-        <item name="colorSurface">@color/md_theme_light_surface</item>
-        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
-        <item name="colorSurfaceVariant">@color/md_theme_light_surfaceVariant</item>
-        <item name="colorOnSurfaceVariant">@color/md_theme_light_onSurfaceVariant</item>
-        <item name="colorOutline">@color/md_theme_light_outline</item>
-        <item name="colorOutlineVariant">@color/md_theme_light_outlineVariant</item>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.ClassNote" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/cn_primary</item>
+        <item name="colorOnPrimary">@color/cn_on_primary</item>
+        <item name="colorPrimaryContainer">@color/cn_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/cn_on_primary_container</item>
+        <item name="colorSecondary">@color/cn_secondary</item>
+        <item name="colorOnSecondary">@color/cn_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/cn_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/cn_on_secondary_container</item>
+        <item name="colorTertiary">@color/cn_tertiary</item>
+        <item name="colorOnTertiary">@color/cn_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/cn_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/cn_on_tertiary_container</item>
+        <item name="colorError">@color/cn_error</item>
+        <item name="colorOnError">@color/cn_on_error</item>
+        <item name="colorErrorContainer">@color/cn_error_container</item>
+        <item name="colorOnErrorContainer">@color/cn_on_error_container</item>
+        <item name="android:colorBackground">@color/cn_background</item>
+        <item name="colorOnBackground">@color/cn_on_background</item>
+        <item name="colorSurface">@color/cn_surface</item>
+        <item name="colorOnSurface">@color/cn_on_surface</item>
+        <item name="colorSurfaceVariant">@color/cn_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/cn_on_surface_variant</item>
+        <item name="colorOutline">@color/cn_outline</item>
+        <item name="colorOutlineVariant">@color/cn_outline_variant</item>
+        <item name="colorSurfaceContainer">@color/cn_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/cn_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/cn_surface_container_highest</item>
+        <item name="colorSurfaceContainerLow">@color/cn_surface_container_low</item>
+        <item name="colorSurfaceContainerLowest">@color/cn_surface_container_lowest</item>
         <item name="android:forceDarkAllowed">false</item>
+        <item name="android:navigationBarColor">@color/cn_surface_container</item>
+        <item name="android:statusBarColor">@color/cn_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
     </style>
 </resources>

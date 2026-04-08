@@ -10,6 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.rendy.classnote.ClassNoteApplication
+import com.rendy.classnote.data.local.entity.ReminderEntity
+import com.rendy.classnote.data.model.ReminderCategory
 import com.rendy.classnote.databinding.FragmentReminderListBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -25,6 +27,8 @@ class ReminderListFragment : Fragment() {
     }
 
     private lateinit var adapter: ReminderAdapter
+    private var selectedCategory: ReminderCategory? = null
+    private var allReminders: List<ReminderEntity> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,11 +57,12 @@ class ReminderListFragment : Fragment() {
             adapter = this@ReminderListFragment.adapter
         }
 
+        setupFilterChips()
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.activeReminders.collectLatest { reminders ->
-                adapter.submitList(reminders)
-                binding.tvEmpty.visibility =
-                    if (reminders.isEmpty()) View.VISIBLE else View.GONE
+                allReminders = reminders
+                applyFilter()
             }
         }
 
@@ -67,6 +72,34 @@ class ReminderListFragment : Fragment() {
                     .actionReminderListFragmentToReminderEditFragment(-1L)
             )
         }
+    }
+
+    private fun setupFilterChips() {
+        binding.chipAll.setOnCheckedChangeListener { _, checked ->
+            if (checked) { selectedCategory = null; applyFilter() }
+        }
+        binding.chipFilterWork.setOnCheckedChangeListener { _, checked ->
+            if (checked) { selectedCategory = ReminderCategory.WORK; applyFilter() }
+        }
+        binding.chipFilterHomework.setOnCheckedChangeListener { _, checked ->
+            if (checked) { selectedCategory = ReminderCategory.HOMEWORK; applyFilter() }
+        }
+        binding.chipFilterExam.setOnCheckedChangeListener { _, checked ->
+            if (checked) { selectedCategory = ReminderCategory.EXAM; applyFilter() }
+        }
+        binding.chipFilterReminder.setOnCheckedChangeListener { _, checked ->
+            if (checked) { selectedCategory = ReminderCategory.REMINDER; applyFilter() }
+        }
+    }
+
+    private fun applyFilter() {
+        val filtered = if (selectedCategory == null) {
+            allReminders
+        } else {
+            allReminders.filter { it.category == selectedCategory!!.name }
+        }
+        adapter.submitList(filtered)
+        binding.tvEmpty.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
     }
 
     override fun onDestroyView() {

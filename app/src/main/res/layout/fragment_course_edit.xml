@@ -28,7 +28,7 @@
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <View android:layout_height="12dp" android:layout_width="match_parent" />
+        <View android:layout_height="10dp" android:layout_width="match_parent" />
 
         <!-- 教師 -->
         <com.google.android.material.textfield.TextInputLayout
@@ -46,7 +46,7 @@
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <View android:layout_height="12dp" android:layout_width="match_parent" />
+        <View android:layout_height="10dp" android:layout_width="match_parent" />
 
         <!-- 教室 -->
         <com.google.android.material.textfield.TextInputLayout
@@ -64,39 +64,47 @@
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <View android:layout_height="12dp" android:layout_width="match_parent" />
+        <View android:layout_height="10dp" android:layout_width="match_parent" />
 
-        <!-- 星期 -->
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- 星期 + 節次（2欄並排） -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/day_of_week"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+            android:orientation="horizontal">
 
-            <AutoCompleteTextView
-                android:id="@+id/spinnerDay"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:hint="@string/day_of_week"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
-        <View android:layout_height="12dp" android:layout_width="match_parent" />
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerDay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- 節次 -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/period"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
-
-            <AutoCompleteTextView
-                android:id="@+id/spinnerPeriod"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:hint="@string/period"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
-        <View android:layout_height="12dp" android:layout_width="match_parent" />
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerPeriod"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+        <View android:layout_height="10dp" android:layout_width="match_parent" />
 
         <!-- 顏色 -->
         <LinearLayout
@@ -107,8 +115,9 @@
 
             <View
                 android:id="@+id/colorPreview"
-                android:layout_width="36dp"
-                android:layout_height="36dp" />
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_category_chip" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPickColor"

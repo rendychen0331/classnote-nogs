@@ -1,37 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="?android:attr/colorBackground">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerReminders"
+    <!-- Category filter chips -->
+    <HorizontalScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="80dp"
-        android:paddingTop="8dp"
-        android:paddingHorizontal="12dp" />
-
-    <TextView
-        android:id="@+id/tvEmpty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="@string/no_reminders"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:visibility="gone" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddReminder"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="@string/add_reminder"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        android:scrollbars="none"
+        android:paddingHorizontal="12dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp">
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        <com.google.android.material.chip.ChipGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAll"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="全部"
+                android:checked="true" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFilterWork"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_work"
+                app:chipBackgroundColor="@color/chip_work_color" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFilterHomework"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_homework"
+                app:chipBackgroundColor="@color/chip_homework_color" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFilterExam"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_exam"
+                app:chipBackgroundColor="@color/chip_exam_color" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFilterReminder"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/category_reminder"
+                app:chipBackgroundColor="@color/chip_reminder_color" />
+
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <!-- List area (RecyclerView + empty state + FAB) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerReminders"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="80dp"
+            android:paddingTop="4dp"
+            android:paddingHorizontal="12dp" />
+
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/no_reminders"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddReminder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/add_reminder"
+            app:srcCompat="@android:drawable/ic_input_add" />
+
+    </FrameLayout>
+
+</LinearLayout>
