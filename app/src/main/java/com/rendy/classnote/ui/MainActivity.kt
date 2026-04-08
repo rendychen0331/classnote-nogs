@@ -90,6 +90,9 @@ class MainActivity : AppCompatActivity() {
         if (!Settings.canDrawOverlays(this)) {
             showOverlayPermissionDialog()
         }
+
+        // Xiaomi HyperOS / MIUI — 鎖屏顯示需額外手動開啟
+        requestXiaomiLockScreenPermission()
     }
 
     private fun showFullScreenIntentDialog() {
@@ -122,5 +125,55 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("略過", null)
             .show()
+    }
+
+    // ── Xiaomi HyperOS / MIUI 額外鎖屏權限引導 ──────────────────────────────
+
+    private fun requestXiaomiLockScreenPermission() {
+        if (!isXiaomiDevice()) return
+        MaterialAlertDialogBuilder(this)
+            .setTitle("小米 / HyperOS：開啟鎖屏顯示")
+            .setMessage(
+                "在小米 HyperOS / MIUI 上，需額外手動開啟「鎖定螢幕顯示」，" +
+                "否則提醒視窗在鎖屏時無法彈出。\n\n" +
+                "路徑：設定 → 應用程式 → 管理應用程式 → ClassNote\n" +
+                "→「其他權限」→ 開啟「在鎖定螢幕上顯示」"
+            )
+            .setPositiveButton("前往 App 設定") { _, _ ->
+                openXiaomiAppPermissions()
+            }
+            .setNegativeButton("略過", null)
+            .show()
+    }
+
+    private fun isXiaomiDevice(): Boolean =
+        android.os.Build.MANUFACTURER.equals("Xiaomi", ignoreCase = true) ||
+        android.os.Build.MANUFACTURER.equals("Redmi", ignoreCase = true) ||
+        !getSystemProperty("ro.miui.ui.version.name").isNullOrEmpty()
+
+    private fun getSystemProperty(key: String): String? = try {
+        @Suppress("PrivateApi")
+        val method = Class.forName("android.os.SystemProperties")
+            .getMethod("get", String::class.java)
+        method.invoke(null, key) as? String
+    } catch (_: Exception) { null }
+
+    private fun openXiaomiAppPermissions() {
+        // 嘗試直接開啟 MIUI 的 App 權限編輯頁
+        val miuiIntent = Intent("miui.intent.action.APP_PERM_EDITOR").apply {
+            setClassName(
+                "com.miui.securitycenter",
+                "com.miui.permcenter.permissions.PermissionsEditorActivity"
+            )
+            putExtra("extra_pkgname", packageName)
+        }
+        val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        try {
+            startActivity(miuiIntent)
+        } catch (_: Exception) {
+            startActivity(fallbackIntent)
+        }
     }
 }
