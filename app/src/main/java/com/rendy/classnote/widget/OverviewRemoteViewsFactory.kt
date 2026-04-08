@@ -10,7 +10,9 @@ import com.rendy.classnote.R
 import com.rendy.classnote.data.local.ClassNoteDatabase
 import com.rendy.classnote.data.local.entity.ReminderEntity
 import com.rendy.classnote.data.model.ReminderCategory
+import android.util.Log
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -22,7 +24,9 @@ class OverviewRemoteViewsFactory(
 ) : RemoteViewsService.RemoteViewsFactory {
 
     private val db: ClassNoteDatabase? by lazy {
-        try { ClassNoteDatabase.getDatabase(context) } catch (_: Exception) { null }
+        try { ClassNoteDatabase.getDatabase(context) } catch (e: Exception) {
+            Log.e("OverviewFactory", "DB init failed", e); null
+        }
     }
     private var items: List<ScheduleItem> = emptyList()
 
@@ -40,28 +44,31 @@ class OverviewRemoteViewsFactory(
         items = try {
             val database = db ?: return
             runBlocking {
-                val today = LocalDate.now()
-                val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
-                val tomorrowStr = today.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)
+                withTimeout(5000L) {
+                    val today = LocalDate.now()
+                    val todayStr = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    val tomorrowStr = today.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)
 
-                val reminders = database.reminderDao().getActiveRemindersOnce()
-                val notifications = database.reminderNotificationDao().getAllPendingNotifications()
-                val notifMap = notifications.groupBy { it.reminderId }
+                    val reminders = database.reminderDao().getActiveRemindersOnce()
+                    val notifications = database.reminderNotificationDao().getAllPendingNotifications()
+                    val notifMap = notifications.groupBy { it.reminderId }
 
-                buildList {
-                    for (r in reminders) {
-                        val timeLabel = buildTimeLabel(r, notifMap[r.id]?.minByOrNull { it.triggerAt }?.triggerAt, todayStr, tomorrowStr)
-                        add(ScheduleItem(
-                            reminderId = r.id,
-                            title = r.title,
-                            category = r.category,
-                            timeLabel = timeLabel,
-                            isNotification = r.category == ReminderCategory.REMINDER.name
-                        ))
+                    buildList {
+                        for (r in reminders) {
+                            val timeLabel = buildTimeLabel(r, notifMap[r.id]?.minByOrNull { it.triggerAt }?.triggerAt, todayStr, tomorrowStr)
+                            add(ScheduleItem(
+                                reminderId = r.id,
+                                title = r.title,
+                                category = r.category,
+                                timeLabel = timeLabel,
+                                isNotification = r.category == ReminderCategory.REMINDER.name
+                            ))
+                        }
                     }
                 }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("OverviewFactory", "onDataSetChanged failed", e)
             emptyList()
         }
     }
@@ -134,7 +141,8 @@ class OverviewRemoteViewsFactory(
             views.setOnClickFillInIntent(R.id.btnComplete, fillIntent)
 
             views
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("OverviewFactory", "getViewAt($position) failed", e)
             RemoteViews(context.packageName, R.layout.widget_item_schedule)
         }
     }

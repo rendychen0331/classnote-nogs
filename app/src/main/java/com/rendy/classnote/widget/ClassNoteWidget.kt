@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 // Use context.getSharedPreferences directly (no preference-ktx dependency needed)
@@ -37,12 +38,15 @@ class ClassNoteWidget : AppWidgetProvider() {
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
             try {
                 updateWidgetInternal(context, manager, widgetId)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // 任何未預期的例外：顯示空白 widget 避免「載入小工具時發生問題」
+                Log.e("ClassNoteWidget", "updateWidget failed for id=$widgetId", e)
                 try {
                     val views = RemoteViews(context.packageName, R.layout.widget_main)
                     manager.updateAppWidget(widgetId, views)
-                } catch (_: Exception) {}
+                } catch (e2: Exception) {
+                    Log.e("ClassNoteWidget", "fallback updateAppWidget also failed", e2)
+                }
             }
         }
 
@@ -127,8 +131,9 @@ class ClassNoteWidget : AppWidgetProvider() {
                         }
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // 資料載入失敗或逾時：仍更新 widget（顯示空白狀態）
+                Log.e("ClassNoteWidget", "loadData failed or timed out", e)
             }
 
             manager.updateAppWidget(widgetId, views)
@@ -301,7 +306,9 @@ class ClassNoteWidget : AppWidgetProvider() {
                                 db.reminderDao().markCompleted(reminderId)
                             }
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        Log.e("ClassNoteWidget", "completeReminder id=$reminderId failed", e)
+                    }
                     // 刷新所有 widget
                     val ids = manager.getAppWidgetIds(ComponentName(context, ClassNoteWidget::class.java))
                     for (id in ids) updateWidget(context, manager, id)
