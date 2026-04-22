@@ -131,6 +131,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestXiaomiLockScreenPermission() {
         if (!isXiaomiDevice()) return
+        val prefs = getSharedPreferences("classnote_prefs", MODE_PRIVATE)
+        if (prefs.getBoolean("xiaomi_lockscreen_prompted", false)) return
         MaterialAlertDialogBuilder(this)
             .setTitle("小米 / HyperOS：開啟鎖屏顯示")
             .setMessage(
@@ -140,9 +142,12 @@ class MainActivity : AppCompatActivity() {
                 "→「其他權限」→ 開啟「在鎖定螢幕上顯示」"
             )
             .setPositiveButton("前往 App 設定") { _, _ ->
+                prefs.edit().putBoolean("xiaomi_lockscreen_prompted", true).apply()
                 openXiaomiAppPermissions()
             }
-            .setNegativeButton("略過", null)
+            .setNegativeButton("略過") { _, _ ->
+                prefs.edit().putBoolean("xiaomi_lockscreen_prompted", true).apply()
+            }
             .show()
     }
 
