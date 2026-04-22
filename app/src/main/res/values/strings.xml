@@ -117,6 +117,10 @@
     <string name="settings_google_restore_success">還原成功，請重新開啟 App</string>
     <string name="settings_google_restore_confirm_title">確認還原？</string>
     <string name="settings_google_restore_confirm_msg">目前資料將被雲端備份覆蓋，此操作無法復原。</string>
+    <string name="settings_perm_xiaomi_confirm_title">小米鎖屏顯示</string>
+    <string name="settings_perm_xiaomi_confirm_msg">是否已在小米設定中開啟「在鎖定螢幕上顯示」？</string>
+    <string name="settings_perm_xiaomi_yes">已開啟</string>
+    <string name="settings_perm_xiaomi_no">尚未開啟</string>
     <string name="backup_network_title">備份網路</string>
     <string name="backup_network_wifi">僅 WiFi</string>
     <string name="backup_network_mobile">僅行動數據</string>
