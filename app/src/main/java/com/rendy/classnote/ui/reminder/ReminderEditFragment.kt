@@ -12,6 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.google.android.material.chip.Chip
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.data.local.entity.ReminderEntity
 import com.rendy.classnote.data.model.ReminderCategory
@@ -167,13 +168,27 @@ class ReminderEditFragment : Fragment() {
     }
 
     private fun refreshNotificationList() {
-        val lines = notificationTimes.mapIndexed { i, t ->
+        binding.chipGroupNotifications.removeAllViews()
+        if (notificationTimes.isEmpty()) {
+            binding.tvNoNotifications.visibility = View.VISIBLE
+            return
+        }
+        binding.tvNoNotifications.visibility = View.GONE
+        notificationTimes.toList().forEach { millis ->
             val dt = LocalDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(t), ZoneId.systemDefault()
+                java.time.Instant.ofEpochMilli(millis), ZoneId.systemDefault()
             )
-            "${i + 1}. ${dt.format(timeFormatter)}"
-        }.joinToString("\n")
-        binding.tvNotificationList.text = lines.ifEmpty { "尚未設定通知時間" }
+            val chip = Chip(requireContext()).apply {
+                text = dt.format(timeFormatter)
+                isCloseIconVisible = true
+                isClickable = false
+                setOnCloseIconClickListener {
+                    notificationTimes.remove(millis)
+                    refreshNotificationList()
+                }
+            }
+            binding.chipGroupNotifications.addView(chip)
+        }
     }
 
     private fun saveReminder() {

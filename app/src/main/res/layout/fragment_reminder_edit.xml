@@ -147,16 +147,22 @@
             android:textAppearance="?attr/textAppearanceLabelLarge"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
-        <TextView
-            android:id="@+id/tvNotificationList"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupNotifications"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvNoNotifications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="?attr/colorOnSurface"
-            android:lineSpacingExtra="4dp"
-            android:text="@string/no_notifications_set" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:text="@string/no_notifications_set"
+            android:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAddNotification"
