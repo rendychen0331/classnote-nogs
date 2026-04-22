@@ -46,7 +46,7 @@
             android:textColor="#AAAAAA"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:background="#2A2A2A"
+            android:background="@drawable/widget_add_btn"
             android:layout_marginStart="6dp" />
 
     </LinearLayout>
