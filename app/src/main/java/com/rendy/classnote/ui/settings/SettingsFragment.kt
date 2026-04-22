@@ -1,5 +1,6 @@
 package com.rendy.classnote.ui.settings
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -8,12 +9,19 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.R
+import com.rendy.classnote.data.DriveBackupManager
+import com.rendy.classnote.data.GoogleAuthManager
 import com.rendy.classnote.databinding.FragmentSettingsBinding
+import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
 
@@ -21,6 +29,18 @@ class SettingsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var prefs: com.rendy.classnote.data.AppPreferences
+
+    private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val account = GoogleAuthManager.handleSignInResult(result.data)
+            if (account != null) {
+                updateGoogleSection(account)
+                loadLastBackupTime(account)
+            } else {
+                Toast.makeText(requireContext(), "登入失敗", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,6 +55,7 @@ class SettingsFragment : Fragment() {
         prefs = (requireActivity().application as ClassNoteApplication).appPreferences
         setupAlarmSection()
         setupPermissionsSection()
+        setupGoogleSection()
     }
 
     override fun onResume() {
@@ -180,6 +201,89 @@ class SettingsFragment : Fragment() {
             startActivity(miuiIntent)
         } catch (_: Exception) {
             startActivity(fallback)
+        }
+    }
+
+    // ── Google 帳號備份 ──────────────────────────────────────────────────────────
+
+    private fun setupGoogleSection() {
+        val account = GoogleAuthManager.getAccount(requireContext())
+        if (account != null) {
+            updateGoogleSection(account)
+            loadLastBackupTime(account)
+        }
+
+        binding.btnGoogleSignIn.setOnClickListener {
+            val currentAccount = GoogleAuthManager.getAccount(requireContext())
+            if (currentAccount != null) {
+                // 登出
+                GoogleAuthManager.signOut(requireContext()) {
+                    requireActivity().runOnUiThread {
+                        binding.tvGoogleAccountEmail.text = getString(R.string.settings_google_not_signed_in)
+                        binding.tvGoogleLastBackup.visibility = View.GONE
+                        binding.layoutGoogleActions.visibility = View.GONE
+                        binding.btnGoogleSignIn.text = getString(R.string.settings_google_sign_in)
+                    }
+                }
+            } else {
+                signInLauncher.launch(GoogleAuthManager.getSignInIntent(requireContext()))
+            }
+        }
+
+        binding.btnGoogleBackup.setOnClickListener {
+            val acc = GoogleAuthManager.getAccount(requireContext()) ?: return@setOnClickListener
+            binding.btnGoogleBackup.isEnabled = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                val result = DriveBackupManager.backup(requireContext(), acc)
+                binding.btnGoogleBackup.isEnabled = true
+                when (result) {
+                    is DriveBackupManager.Result.Success -> {
+                        Toast.makeText(requireContext(), getString(R.string.settings_google_backup_success), Toast.LENGTH_SHORT).show()
+                        loadLastBackupTime(acc)
+                    }
+                    is DriveBackupManager.Result.Error ->
+                        Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        binding.btnGoogleRestore.setOnClickListener {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.settings_google_restore_confirm_title))
+                .setMessage(getString(R.string.settings_google_restore_confirm_msg))
+                .setPositiveButton("還原") { _, _ ->
+                    val acc = GoogleAuthManager.getAccount(requireContext()) ?: return@setPositiveButton
+                    binding.btnGoogleRestore.isEnabled = false
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val result = DriveBackupManager.restore(requireContext(), acc)
+                        binding.btnGoogleRestore.isEnabled = true
+                        when (result) {
+                            is DriveBackupManager.Result.Success ->
+                                Toast.makeText(requireContext(), getString(R.string.settings_google_restore_success), Toast.LENGTH_LONG).show()
+                            is DriveBackupManager.Result.Error ->
+                                Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show()
+        }
+    }
+
+    private fun updateGoogleSection(account: GoogleSignInAccount) {
+        binding.tvGoogleAccountEmail.text = account.email ?: account.displayName
+        binding.tvGoogleLastBackup.visibility = View.VISIBLE
+        binding.layoutGoogleActions.visibility = View.VISIBLE
+        binding.btnGoogleSignIn.text = getString(R.string.settings_google_sign_out)
+    }
+
+    private fun loadLastBackupTime(account: GoogleSignInAccount) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val time = DriveBackupManager.getLastBackupTime(requireContext(), account)
+            binding.tvGoogleLastBackup.text = if (time != null)
+                getString(R.string.settings_google_last_backup, time)
+            else
+                getString(R.string.settings_google_no_backup)
         }
     }
 

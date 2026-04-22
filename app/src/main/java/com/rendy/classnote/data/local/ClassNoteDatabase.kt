@@ -55,6 +55,11 @@ abstract class ClassNoteDatabase : RoomDatabase() {
             }
         }
 
+        fun closeDatabase() {
+            INSTANCE?.close()
+            INSTANCE = null
+        }
+
         fun getDatabase(context: Context): ClassNoteDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(

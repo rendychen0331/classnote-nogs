@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.navigation.safeargs)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -61,6 +62,10 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.viewpager2)
+    implementation(libs.play.services.auth)
+    implementation(libs.google.api.client.android)
+    implementation(libs.google.api.services.drive)
+    implementation(libs.google.http.client.gson)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

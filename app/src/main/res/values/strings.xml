@@ -105,4 +105,16 @@
     <string name="snooze_5min">5 分鐘</string>
     <string name="snooze_15min">15 分鐘</string>
     <string name="snooze_30min">30 分鐘</string>
+    <string name="settings_section_google">Google 帳號備份</string>
+    <string name="settings_google_sign_in">登入 Google</string>
+    <string name="settings_google_sign_out">登出</string>
+    <string name="settings_google_backup">備份到雲端</string>
+    <string name="settings_google_restore">從雲端還原</string>
+    <string name="settings_google_last_backup">最後備份：%1$s</string>
+    <string name="settings_google_no_backup">尚未備份</string>
+    <string name="settings_google_not_signed_in">未登入</string>
+    <string name="settings_google_backup_success">備份成功</string>
+    <string name="settings_google_restore_success">還原成功，請重新開啟 App</string>
+    <string name="settings_google_restore_confirm_title">確認還原？</string>
+    <string name="settings_google_restore_confirm_msg">目前資料將被雲端備份覆蓋，此操作無法復原。</string>
 </resources>
