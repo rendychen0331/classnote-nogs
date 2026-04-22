@@ -82,6 +82,10 @@
     <string name="notification_channel_description">ClassNote 提醒事項推播通知</string>
     <string name="notification_tap_hint">點擊查看提醒詳情</string>
 
+    <!-- Reminder Edit - full screen toggle -->
+    <string name="reminder_full_screen_alarm_title">全螢幕提醒</string>
+    <string name="reminder_full_screen_alarm_desc">觸發時以全螢幕鬧鐘介面顯示並震動</string>
+
     <!-- Settings -->
     <string name="nav_settings">設定</string>
     <string name="settings_section_alarm">鬧鐘提醒</string>

@@ -59,11 +59,17 @@ class CourseEditFragment : Fragment() {
 
         setupDropdowns()
 
-        if (args.courseId > 0) {
-            loadCourse(args.courseId)
-        } else {
-            setDropdown(binding.spinnerDay, days, args.dayOfWeek - 1)
-            setDropdown(binding.spinnerPeriod, periods, args.period - 1)
+        // 星期與節次固定（只編輯該格），用 post 確保 view attach 後才設文字
+        binding.root.post {
+            if (args.courseId > 0) {
+                loadCourse(args.courseId)
+            } else {
+                setDropdown(binding.spinnerDay, days, args.dayOfWeek - 1)
+                setDropdown(binding.spinnerPeriod, periods, args.period - 1)
+            }
+            // 鎖定：來自格子點擊，不允許更換星期/節次
+            binding.tilDay.isEnabled = false
+            binding.tilPeriod.isEnabled = false
         }
 
         updateColorPreview()

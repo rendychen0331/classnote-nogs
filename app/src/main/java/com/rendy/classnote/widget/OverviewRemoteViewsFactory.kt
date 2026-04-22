@@ -117,19 +117,22 @@ class OverviewRemoteViewsFactory(
             views.setTextViewText(R.id.tvTime, item.timeLabel)
 
             if (item.isNotification) {
-                views.setTextViewText(R.id.tvIcon, "🔔")
-                views.setTextColor(R.id.tvIcon, Color.parseColor("#FFA726"))
+                views.setTextViewText(R.id.tvIcon, "●")
+                views.setTextColor(R.id.tvIcon, Color.parseColor("#FFB74D"))
                 views.setViewVisibility(R.id.tvCategory, View.GONE)
             } else {
-                views.setTextViewText(R.id.tvIcon, "○")
-                views.setTextColor(R.id.tvIcon, Color.parseColor("#AAAACC"))
+                views.setTextViewText(R.id.tvIcon, "●")
 
                 val cat = ReminderCategory.fromString(item.category)
                 if (cat != null) {
+                    val (iconColor, chipTextColor) = chipColors(cat)
+                    views.setTextColor(R.id.tvIcon, Color.parseColor(iconColor))
                     views.setViewVisibility(R.id.tvCategory, View.VISIBLE)
                     views.setTextViewText(R.id.tvCategory, cat.label)
                     views.setInt(R.id.tvCategory, "setBackgroundResource", chipDrawableRes(cat))
+                    views.setTextColor(R.id.tvCategory, Color.parseColor(chipTextColor))
                 } else {
+                    views.setTextColor(R.id.tvIcon, Color.parseColor("#8080AA"))
                     views.setViewVisibility(R.id.tvCategory, View.GONE)
                 }
             }
@@ -152,6 +155,14 @@ class OverviewRemoteViewsFactory(
         ReminderCategory.HOMEWORK -> R.drawable.widget_chip_homework
         ReminderCategory.EXAM -> R.drawable.widget_chip_exam
         ReminderCategory.REMINDER -> R.drawable.widget_chip_reminder
+    }
+
+    // Returns Pair(iconColor, chipTextColor)
+    private fun chipColors(cat: ReminderCategory): Pair<String, String> = when (cat) {
+        ReminderCategory.WORK -> "#54C7FC" to "#54C7FC"
+        ReminderCategory.HOMEWORK -> "#66BB6A" to "#66BB6A"
+        ReminderCategory.EXAM -> "#FF6B6B" to "#FF6B6B"
+        ReminderCategory.REMINDER -> "#FFB74D" to "#FFB74D"
     }
 
     override fun getLoadingView(): RemoteViews? = null

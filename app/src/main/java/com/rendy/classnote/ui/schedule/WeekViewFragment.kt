@@ -52,11 +52,6 @@ class WeekViewFragment : Fragment() {
                 }
         }
 
-        binding.fabAddCourse.setOnClickListener {
-            findNavController().navigate(
-                ScheduleFragmentDirections.actionWeekViewFragmentToCourseEditFragment()
-            )
-        }
     }
 
     private fun renderWeekGrid(courses: List<CourseEntity>, periodTimes: List<com.rendy.classnote.data.local.entity.PeriodTimeEntity>) {

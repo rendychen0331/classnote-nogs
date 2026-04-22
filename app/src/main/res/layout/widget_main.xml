@@ -9,10 +9,10 @@
     <!-- Tab bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="36dp"
+        android:layout_height="34dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#22FFFFFF"
+        android:background="#1A103A"
         android:padding="3dp">
 
         <TextView
@@ -39,14 +39,14 @@
 
         <TextView
             android:id="@+id/btnAdd"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
             android:gravity="center"
             android:text="+"
             android:textColor="#FFFFFF"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:background="#FF4081"
+            android:background="#CC2272"
             android:layout_marginStart="6dp" />
 
     </LinearLayout>
@@ -78,12 +78,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="NEXT: —"
-                    android:textColor="#4FC3F7"
-                    android:textSize="12sp"
+                    android:textColor="#54C7FC"
+                    android:textSize="11sp"
                     android:textStyle="bold"
                     android:background="@drawable/widget_next_bg"
                     android:paddingHorizontal="8dp"
-                    android:paddingVertical="3dp" />
+                    android:paddingVertical="4dp" />
 
                 <LinearLayout
                     android:id="@+id/linkedReminder1"
@@ -175,14 +175,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="🔔"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text=" 提醒"
-                        android:textColor="#FFA726"
-                        android:textSize="11sp"
+                        android:textColor="#FFB74D"
+                        android:textSize="10sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -190,8 +190,9 @@
                     android:id="@+id/tvRightReminderTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#E0E0E0"
+                    android:textColor="#E9E1FF"
                     android:textSize="11sp"
+                    android:textStyle="bold"
                     android:maxLines="2"
                     android:ellipsize="end"
                     android:layout_marginTop="2dp" />
@@ -200,7 +201,7 @@
                     android:id="@+id/tvRightReminderTime"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="#AAAACC"
+                    android:textColor="#8080AA"
                     android:textSize="10sp"
                     android:layout_marginTop="1dp" />
 
@@ -220,9 +221,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="接下來的排程"
-            android:textColor="#AAAACC"
-            android:textSize="11sp"
-            android:layout_marginBottom="4dp" />
+            android:textColor="#8080AA"
+            android:textSize="10sp"
+            android:letterSpacing="0.05"
+            android:layout_marginBottom="2dp" />
 
         <!-- Schedule list -->
         <ListView

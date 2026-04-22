@@ -33,5 +33,6 @@ data class ReminderEntity(
     val createdAt: Long = System.currentTimeMillis(),
     val category: String? = null,  // WORK / HOMEWORK / EXAM / REMINDER
     val colorHex: String? = null,  // 自訂顏色，null 時依 category 套用
-    val startDate: String? = null  // "yyyy-MM-dd" 多天事件開始日，null 視為單日
+    val startDate: String? = null, // "yyyy-MM-dd" 多天事件開始日，null 視為單日
+    val fullScreenAlarm: Boolean = true  // 是否使用全螢幕提醒（個別設定）
 )

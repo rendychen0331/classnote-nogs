@@ -48,6 +48,7 @@ class ReminderEditFragment : Fragment() {
     private var originalCourseId: Long? = null
     private var originalCreatedAt: Long? = null
     private var selectedCategory: String? = null
+    private var fullScreenAlarm: Boolean = true
     // 追蹤非同步載入 job，儲存前先等待完成
     private var loadJob: Job? = null
 
@@ -71,6 +72,12 @@ class ReminderEditFragment : Fragment() {
         binding.btnSave.setOnClickListener { saveReminder() }
         binding.btnCancel.setOnClickListener { findNavController().popBackStack() }
 
+        // 全螢幕提醒開關
+        binding.switchFullScreenAlarm.isChecked = fullScreenAlarm
+        binding.switchFullScreenAlarm.setOnCheckedChangeListener { _, checked ->
+            fullScreenAlarm = checked
+        }
+
         // Category chip selection
         binding.chipGroupCategory.setOnCheckedStateChangeListener { _, checkedIds ->
             selectedCategory = when {
@@ -93,6 +100,8 @@ class ReminderEditFragment : Fragment() {
             binding.etNote.setText(reminder.note)
             binding.tvDueDate.text = reminder.dueDate ?: ""
             selectedCategory = reminder.category
+            fullScreenAlarm = reminder.fullScreenAlarm
+            binding.switchFullScreenAlarm.isChecked = fullScreenAlarm
             when (reminder.category) {
                 ReminderCategory.WORK.name -> binding.chipWork.isChecked = true
                 ReminderCategory.HOMEWORK.name -> binding.chipHomework.isChecked = true
@@ -181,7 +190,8 @@ class ReminderEditFragment : Fragment() {
             dueDate = binding.tvDueDate.text.toString().ifEmpty { null },
             courseId = originalCourseId,
             createdAt = originalCreatedAt ?: System.currentTimeMillis(),
-            category = selectedCategory
+            category = selectedCategory,
+            fullScreenAlarm = fullScreenAlarm
         )
 
         // NonCancellable 確保 DB 寫入不因 lifecycle 取消而中斷

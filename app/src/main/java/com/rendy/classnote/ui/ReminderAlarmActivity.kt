@@ -1,12 +1,20 @@
 package com.rendy.classnote.ui
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.rendy.classnote.data.model.ReminderCategory
 import com.rendy.classnote.databinding.ActivityReminderAlarmBinding
 import java.time.LocalTime
@@ -24,11 +32,31 @@ class ReminderAlarmActivity : AppCompatActivity() {
         const val EXTRA_NOTE = "alarm_note"
         const val EXTRA_CATEGORY = "alarm_category"
         const val EXTRA_NOTIFICATION_ID = "alarm_notification_id"
+        const val EXTRA_FULL_SCREEN_ALARM = "alarm_full_screen_alarm"
+
+        // 通知列動作按鈕（延後/完成）觸發後廣播此 action 讓 Activity 自動關閉
+        const val ACTION_DISMISS = "com.rendy.classnote.ALARM_DISMISS"
+        const val EXTRA_DISMISS_NOTIFICATION_ID = "dismiss_notification_id"
 
         const val SNOOZE_MINUTES = 10L
+
+        // 震動模式：on 800ms → off 400ms → on 800ms → off 400ms → ... 循環
+        private val VIBRATION_PATTERN = longArrayOf(0, 800, 400, 800, 400, 800, 400, 800, 2000)
     }
 
     private lateinit var binding: ActivityReminderAlarmBinding
+    private var vibrator: Vibrator? = null
+    private var notificationId: Int = -1
+
+    // 監聽通知列按鈕（延後/完成）觸發的 dismiss 廣播
+    private val dismissReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getIntExtra(EXTRA_DISMISS_NOTIFICATION_ID, -1)
+            if (id == notificationId || id == -1) {
+                finish()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +80,15 @@ class ReminderAlarmActivity : AppCompatActivity() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: return finish()
         val note = intent.getStringExtra(EXTRA_NOTE) ?: ""
         val category = intent.getStringExtra(EXTRA_CATEGORY)
-        val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
+        notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
+        val fullScreenAlarm = intent.getBooleanExtra(EXTRA_FULL_SCREEN_ALARM, true)
+
+        // 註冊 dismiss receiver（通知列延後/完成 → 自動關閉 Activity）
+        ContextCompat.registerReceiver(
+            this, dismissReceiver,
+            IntentFilter(ACTION_DISMISS),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
         // 顯示當前時間
         binding.tvAlarmTime.text =
@@ -77,27 +113,54 @@ class ReminderAlarmActivity : AppCompatActivity() {
             binding.tvNote.text = note
         }
 
+        // 震動（全螢幕提醒開啟時才震）
+        if (fullScreenAlarm) startVibration()
+
         // 關閉按鈕
         binding.btnDismiss.setOnClickListener {
             finish()
         }
 
-        // 延後 10 分鐘（Snooze）
+        // 延後（Snooze）
         binding.btnSnooze.setOnClickListener {
-            scheduleSnooze(notificationId, title, note, category)
+            scheduleSnooze(notificationId, title, note, category, fullScreenAlarm)
             finish()
         }
+    }
+
+    private fun startVibration() {
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(VibratorManager::class.java))?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Vibrator::class.java)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 播完 PATTERN 後從 index 0 重複
+            vibrator?.vibrate(VibrationEffect.createWaveform(VIBRATION_PATTERN, 0))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(VIBRATION_PATTERN, 0)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        vibrator?.cancel()
+        try { unregisterReceiver(dismissReceiver) } catch (_: Exception) {}
     }
 
     private fun scheduleSnooze(
         notificationId: Int,
         title: String,
         note: String,
-        category: String?
+        category: String?,
+        fullScreenAlarm: Boolean
     ) {
         if (notificationId < 0) return
-        // 重新用 AlarmManager 在 10 分鐘後觸發同一個 notification ID
-        val triggerAt = System.currentTimeMillis() + SNOOZE_MINUTES * 60 * 1000
+        val app = applicationContext as? com.rendy.classnote.ClassNoteApplication
+        val snoozeMinutes = app?.appPreferences?.snoozeDurationMinutes?.toLong() ?: SNOOZE_MINUTES
+        val triggerAt = System.currentTimeMillis() + snoozeMinutes * 60_000L
         val alarmManager =
             getSystemService(android.app.AlarmManager::class.java) ?: return
         val intent = android.content.Intent(this,
@@ -105,15 +168,15 @@ class ReminderAlarmActivity : AppCompatActivity() {
             action = "com.rendy.classnote.REMINDER_ALARM"
             putExtra(com.rendy.classnote.notification.ReminderReceiver.EXTRA_NOTIFICATION_ID,
                 notificationId.toLong())
-            // 把 title/note/category 放在 intent 供 receiver 直接用（snooze 情境）
             putExtra(EXTRA_TITLE, title)
             putExtra(EXTRA_NOTE, note)
             putExtra(EXTRA_CATEGORY, category)
             putExtra("is_snooze", true)
+            putExtra("full_screen_alarm", fullScreenAlarm)
         }
         val pendingIntent = android.app.PendingIntent.getBroadcast(
             this,
-            notificationId + 100_000,   // 避免與原本 PendingIntent 衝突
+            notificationId + 100_000,
             intent,
             android.app.PendingIntent.FLAG_UPDATE_CURRENT or
                     android.app.PendingIntent.FLAG_IMMUTABLE

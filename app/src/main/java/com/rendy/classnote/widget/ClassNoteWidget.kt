@@ -201,12 +201,14 @@ class ClassNoteWidget : AppWidgetProvider() {
                     val cat = ReminderCategory.fromString(reminder.category)
                     if (cat != null) {
                         views.setTextViewText(catId, cat.label)
-                        views.setInt(catId, "setBackgroundResource", when (cat) {
-                            ReminderCategory.WORK -> R.drawable.widget_chip_work
-                            ReminderCategory.HOMEWORK -> R.drawable.widget_chip_homework
-                            ReminderCategory.EXAM -> R.drawable.widget_chip_exam
-                            ReminderCategory.REMINDER -> R.drawable.widget_chip_reminder
-                        })
+                        val (drawableRes, textColor) = when (cat) {
+                            ReminderCategory.WORK -> R.drawable.widget_chip_work to "#54C7FC"
+                            ReminderCategory.HOMEWORK -> R.drawable.widget_chip_homework to "#66BB6A"
+                            ReminderCategory.EXAM -> R.drawable.widget_chip_exam to "#FF6B6B"
+                            ReminderCategory.REMINDER -> R.drawable.widget_chip_reminder to "#FFB74D"
+                        }
+                        views.setInt(catId, "setBackgroundResource", drawableRes)
+                        views.setTextColor(catId, Color.parseColor(textColor))
                     }
                     views.setTextViewText(titleId, reminder.title)
                 }

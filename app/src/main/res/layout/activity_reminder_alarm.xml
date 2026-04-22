@@ -108,19 +108,19 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 下方按鈕 -->
+    <!-- 下方按鈕（水平 chain，各佔一半） -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSnooze"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="0dp"
         android:layout_height="56dp"
         android:layout_marginEnd="8dp"
-        android:text="延後 10 分鐘"
+        android:text="延後"
         android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnDismiss"
-        app:layout_constraintWidth_percent="0.45" />
+        app:layout_constraintHorizontal_chainStyle="spread" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnDismiss"
@@ -131,9 +131,7 @@
         android:text="關閉"
         android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintWidth_percent="0.55" />
+        app:layout_constraintStart_toEndOf="@id/btnSnooze"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

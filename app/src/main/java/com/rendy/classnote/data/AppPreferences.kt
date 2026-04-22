@@ -15,9 +15,9 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_FULL_SCREEN_ALARM, true)
         set(value) = prefs.edit { putBoolean(KEY_FULL_SCREEN_ALARM, value) }
 
-    /** Snooze 分鐘數。預設 10 分鐘。 */
+    /** Snooze 分鐘數。預設 5 分鐘。 */
     var snoozeDurationMinutes: Int
-        get() = prefs.getInt(KEY_SNOOZE_MINUTES, 10)
+        get() = prefs.getInt(KEY_SNOOZE_MINUTES, 5)
         set(value) = prefs.edit { putInt(KEY_SNOOZE_MINUTES, value) }
 
     companion object {

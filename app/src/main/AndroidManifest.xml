@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".ClassNoteApplication"
@@ -43,6 +44,16 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.rendy.classnote.REMINDER_ALARM" />
+            </intent-filter>
+        </receiver>
+
+        <!-- BroadcastReceiver for notification quick actions (延後 / 完成) -->
+        <receiver
+            android:name=".notification.ReminderActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.rendy.classnote.ACTION_SNOOZE" />
+                <action android:name="com.rendy.classnote.ACTION_COMPLETE" />
             </intent-filter>
         </receiver>
 

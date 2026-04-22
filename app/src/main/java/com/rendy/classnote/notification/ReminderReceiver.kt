@@ -28,7 +28,8 @@ class ReminderReceiver : BroadcastReceiver() {
             val title = intent.getStringExtra(ReminderAlarmActivity.EXTRA_TITLE) ?: return
             val note = intent.getStringExtra(ReminderAlarmActivity.EXTRA_NOTE) ?: ""
             val category = intent.getStringExtra(ReminderAlarmActivity.EXTRA_CATEGORY)
-            showAlarm(context, notificationId.toInt(), title, note, category)
+            val fullScreenAlarm = intent.getBooleanExtra("full_screen_alarm", true)
+            showAlarm(context, notificationId.toInt(), title, note, category, fullScreenAlarm = fullScreenAlarm)
             return
         }
 
@@ -49,7 +50,9 @@ class ReminderReceiver : BroadcastReceiver() {
                     notificationId.toInt(),
                     reminder.title,
                     reminder.note,
-                    reminder.category
+                    reminder.category,
+                    reminderId,
+                    fullScreenAlarm = reminder.fullScreenAlarm
                 )
 
                 reminderRepo.markNotificationFired(notificationId)
@@ -70,15 +73,22 @@ class ReminderReceiver : BroadcastReceiver() {
         notificationId: Int,
         title: String,
         note: String,
-        category: String?
+        category: String?,
+        reminderId: Long = -1L,
+        fullScreenAlarm: Boolean = true
     ) {
         val app = context.applicationContext as? ClassNoteApplication
-        val fullScreenEnabled = app?.appPreferences?.fullScreenAlarmEnabled ?: true
+        // 全域設定 AND 個別設定 都要開才顯示全螢幕
+        val globalEnabled = app?.appPreferences?.fullScreenAlarmEnabled ?: true
+        val shouldFullScreen = fullScreenAlarm && globalEnabled
 
         // 永遠發通知（備援 + 使用者可從通知欄看到）
-        NotificationHelper.showReminderNotification(context, notificationId, title, note, category)
+        NotificationHelper.showReminderNotification(
+            context, notificationId, title, note, category, reminderId,
+            fullScreenAlarm = shouldFullScreen
+        )
 
-        if (!fullScreenEnabled) return
+        if (!shouldFullScreen) return
 
         // 有 SYSTEM_ALERT_WINDOW 權限時直接啟動 Activity（螢幕亮著也有效）
         if (Settings.canDrawOverlays(context)) {
@@ -91,6 +101,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 putExtra(ReminderAlarmActivity.EXTRA_NOTE, note)
                 putExtra(ReminderAlarmActivity.EXTRA_CATEGORY, category)
                 putExtra(ReminderAlarmActivity.EXTRA_NOTIFICATION_ID, notificationId)
+                putExtra(ReminderAlarmActivity.EXTRA_FULL_SCREEN_ALARM, true)
             }
             context.startActivity(alarmIntent)
         } else {

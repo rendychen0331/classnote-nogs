@@ -66,13 +66,14 @@
 
         <View android:layout_height="10dp" android:layout_width="match_parent" />
 
-        <!-- 星期 + 節次（2欄並排） -->
+        <!-- 星期 + 節次（2欄並排，來自格子點擊時鎖定） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilDay"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -84,10 +85,12 @@
                     android:id="@+id/spinnerDay"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
+                    android:inputType="none"
+                    android:focusable="false" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPeriod"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -99,7 +102,8 @@
                     android:id="@+id/spinnerPeriod"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
+                    android:inputType="none"
+                    android:focusable="false" />
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>

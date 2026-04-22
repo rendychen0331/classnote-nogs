@@ -4,26 +4,26 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingVertical="5dp"
+    android:paddingVertical="4dp"
     android:paddingHorizontal="2dp">
 
     <!-- Circle / bell icon -->
     <TextView
         android:id="@+id/tvIcon"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:gravity="center"
-        android:textSize="14sp"
-        android:text="○"
-        android:textColor="#AAAACC" />
+        android:textSize="13sp"
+        android:text="●"
+        android:textColor="#8080AA" />
 
     <!-- Category chip -->
     <TextView
         android:id="@+id/tvCategory"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#FFFFFF"
-        android:textSize="10sp"
+        android:textColor="#B3A2F7"
+        android:textSize="9sp"
         android:paddingHorizontal="6dp"
         android:paddingVertical="2dp"
         android:layout_marginStart="4dp"
@@ -42,8 +42,8 @@
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#E0E0E0"
-            android:textSize="12sp"
+            android:textColor="#E9E1FF"
+            android:textSize="11sp"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -51,7 +51,7 @@
             android:id="@+id/tvTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#AAAACC"
+            android:textColor="#8080AA"
             android:textSize="10sp"
             android:layout_marginTop="1dp" />
     </LinearLayout>
@@ -59,12 +59,12 @@
     <!-- Complete button -->
     <TextView
         android:id="@+id/btnComplete"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
         android:gravity="center"
         android:text="✓"
-        android:textColor="#66BB6A"
-        android:textSize="16sp"
-        android:background="#22FFFFFF" />
+        android:textColor="#54C7FC"
+        android:textSize="14sp"
+        android:background="@drawable/widget_complete_btn" />
 
 </LinearLayout>

@@ -80,7 +80,7 @@ class SettingsFragment : Fragment() {
             getString(R.string.snooze_30min)
         )
         val minutes = intArrayOf(5, 10, 15, 30)
-        val current = minutes.indexOfFirst { it == prefs.snoozeDurationMinutes }.coerceAtLeast(1)
+        val current = minutes.indexOfFirst { it == prefs.snoozeDurationMinutes }.coerceAtLeast(0)
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.settings_snooze_title))

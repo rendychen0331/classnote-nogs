@@ -34,7 +34,9 @@ object NotificationHelper {
         notificationId: Int,
         title: String,
         body: String,
-        category: String? = null
+        category: String? = null,
+        reminderId: Long = -1L,
+        fullScreenAlarm: Boolean = true
     ) {
         // 點擊通知 → 跳到提醒列表
         val tapIntent = Intent(context, MainActivity::class.java).apply {
@@ -63,9 +65,6 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val fullScreenEnabled = (context.applicationContext as? ClassNoteApplication)
-            ?.appPreferences?.fullScreenAlarmEnabled ?: true
-
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -75,9 +74,44 @@ object NotificationHelper {
             .setAutoCancel(true)
             .setContentIntent(tapPendingIntent)
 
-        if (fullScreenEnabled) {
+        if (fullScreenAlarm) {
             builder.setFullScreenIntent(fullScreenPendingIntent, true)
         }
+
+        // ── 快速動作按鈕（延後 / 完成）────────────────────────────────────────
+        // 延後
+        val snoozeIntent = Intent(context, ReminderActionReceiver::class.java).apply {
+            action = ReminderActionReceiver.ACTION_SNOOZE
+            putExtra(ReminderActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+            putExtra(ReminderActionReceiver.EXTRA_TITLE, title)
+            putExtra(ReminderActionReceiver.EXTRA_NOTE, body)
+            putExtra(ReminderActionReceiver.EXTRA_CATEGORY, category)
+            putExtra(ReminderActionReceiver.EXTRA_FULL_SCREEN_ALARM, fullScreenAlarm)
+        }
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            context,
+            notificationId + 20_000,
+            snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // 完成（只有在有 reminderId 時才顯示）
+        if (reminderId >= 0) {
+            val completeIntent = Intent(context, ReminderActionReceiver::class.java).apply {
+                action = ReminderActionReceiver.ACTION_COMPLETE
+                putExtra(ReminderActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+                putExtra(ReminderActionReceiver.EXTRA_REMINDER_ID, reminderId)
+            }
+            val completePendingIntent = PendingIntent.getBroadcast(
+                context,
+                notificationId + 30_000,
+                completeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(0, "完成", completePendingIntent)
+        }
+
+        builder.addAction(0, "延後", snoozePendingIntent)
 
         val notification = builder.build()
 
