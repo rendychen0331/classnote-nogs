@@ -202,36 +202,6 @@ class ClassNoteWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.tvNextLabel, "今日無課")
             }
 
-            // ── Linked reminders for next course ──────────────────────────
-            val linked = if (nextCourse != null) {
-                db.reminderDao().getActiveRemindersOnce()
-                    .filter { it.courseId == nextCourse.id }
-                    .take(2)
-            } else emptyList()
-
-            fun bindLinked(reminderId: Int, catId: Int, titleId: Int, reminder: com.rendy.classnote.data.local.entity.ReminderEntity?) {
-                if (reminder == null) {
-                    views.setViewVisibility(reminderId, View.GONE)
-                } else {
-                    views.setViewVisibility(reminderId, View.VISIBLE)
-                    val cat = ReminderCategory.fromString(reminder.category)
-                    if (cat != null) {
-                        views.setTextViewText(catId, cat.label)
-                        val (drawableRes, textColor) = when (cat) {
-                            ReminderCategory.WORK -> R.drawable.widget_chip_work to "#54C7FC"
-                            ReminderCategory.HOMEWORK -> R.drawable.widget_chip_homework to "#66BB6A"
-                            ReminderCategory.EXAM -> R.drawable.widget_chip_exam to "#FF6B6B"
-                            ReminderCategory.REMINDER -> R.drawable.widget_chip_reminder to "#FFB74D"
-                        }
-                        views.setInt(catId, "setBackgroundResource", drawableRes)
-                        views.setTextColor(catId, Color.parseColor(textColor))
-                    }
-                    views.setTextViewText(titleId, reminder.title)
-                }
-            }
-            bindLinked(R.id.linkedReminder1, R.id.tvLinkedCat1, R.id.tvLinkedTitle1, linked.getOrNull(0))
-            bindLinked(R.id.linkedReminder2, R.id.tvLinkedCat2, R.id.tvLinkedTitle2, linked.getOrNull(1))
-
             // ── Right panel: soonest upcoming reminder with notification ───
             val allReminders = db.reminderDao().getActiveRemindersOnce()
             val notifications = db.reminderNotificationDao().getAllPendingNotifications()

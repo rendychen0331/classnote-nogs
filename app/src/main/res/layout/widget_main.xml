@@ -66,88 +66,21 @@
             android:orientation="horizontal"
             android:layout_marginTop="8dp">
 
-            <!-- Left: NEXT + linked reminders -->
-            <LinearLayout
+            <!-- Left: NEXT -->
+            <TextView
+                android:id="@+id/tvNextLabel"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvNextLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="NEXT: —"
-                    android:textColor="#54C7FC"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/widget_next_bg"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp" />
-
-                <LinearLayout
-                    android:id="@+id/linkedReminder1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="4dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/tvLinkedCat1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:paddingHorizontal="5dp"
-                        android:paddingVertical="2dp"
-                        android:background="@drawable/widget_chip_default" />
-
-                    <TextView
-                        android:id="@+id/tvLinkedTitle1"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:textColor="#E0E0E0"
-                        android:textSize="11sp"
-                        android:maxLines="1"
-                        android:ellipsize="end"
-                        android:layout_marginStart="6dp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/linkedReminder2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="3dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/tvLinkedCat2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF"
-                        android:textSize="10sp"
-                        android:paddingHorizontal="5dp"
-                        android:paddingVertical="2dp"
-                        android:background="@drawable/widget_chip_default" />
-
-                    <TextView
-                        android:id="@+id/tvLinkedTitle2"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:textColor="#E0E0E0"
-                        android:textSize="11sp"
-                        android:maxLines="1"
-                        android:ellipsize="end"
-                        android:layout_marginStart="6dp" />
-                </LinearLayout>
-
-            </LinearLayout>
+                android:text="NEXT: —"
+                android:textColor="#54C7FC"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:background="@drawable/widget_next_bg"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <!-- Divider (must use TextView, not View — View is not supported in RemoteViews) -->
             <TextView
