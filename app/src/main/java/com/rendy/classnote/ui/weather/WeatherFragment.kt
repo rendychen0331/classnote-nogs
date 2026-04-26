@@ -110,7 +110,47 @@ class WeatherFragment : Fragment() {
     private fun showAddLocationDialog() {
         val savedLocs = weatherPrefs.savedLocations
         val allNames = WeatherApi.LOCATIONS.map { it.displayName }
-        val available = allNames.filter { it !in savedLocs }
+        val available = allNames.toSet()
+
+        // 第一層：選縣市
+        val counties = WeatherApi.COUNTY_NAMES.toMutableList()
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_location_picker, null)
+        val etSearch = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etLocationSearch)
+        val listView = dialogView.findViewById<android.widget.ListView>(R.id.listViewLocations)
+
+        val filtered = counties.toMutableList()
+        val listAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, filtered)
+        listView.adapter = listAdapter
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.weather_add_location))
+            .setView(dialogView)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                val q = s?.toString()?.trim() ?: ""
+                filtered.clear()
+                filtered.addAll(if (q.isEmpty()) counties else counties.filter { it.contains(q) })
+                listAdapter.notifyDataSetChanged()
+            }
+        })
+
+        listView.setOnItemClickListener { _, _, position, _ ->
+            dialog.dismiss()
+            showDistrictDialog(filtered[position], savedLocs)
+        }
+    }
+
+    private fun showDistrictDialog(county: String, savedLocs: List<String>) {
+        val districts = WeatherApi.districtsOf(county).map { it.displayName }
+        // 「整個 XXX」選項放最前面
+        val options = mutableListOf(county) + districts
+        val available = options.filter { it !in savedLocs }
 
         if (available.isEmpty()) {
             Toast.makeText(requireContext(), getString(R.string.weather_all_added), Toast.LENGTH_SHORT).show()
@@ -127,9 +167,10 @@ class WeatherFragment : Fragment() {
         listView.adapter = listAdapter
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.weather_add_location))
+            .setTitle(county)
             .setView(dialogView)
             .setNegativeButton(getString(R.string.cancel), null)
+            .setNeutralButton(getString(R.string.back)) { _, _ -> showAddLocationDialog() }
             .show()
 
         etSearch.addTextChangedListener(object : TextWatcher {

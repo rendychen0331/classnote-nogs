@@ -125,8 +125,15 @@ object WeatherApi {
         addAll(districts("新竹市", "東區","北區","香山區"))
     }
 
-    /** 全部地點（縣市 + 鄉鎮區），供 UI 選擇 */
+    /** 全部地點（縣市 + 鄉鎮區），供搜尋用 */
     val LOCATIONS: List<WeatherLocation> = COUNTY_LOCATIONS + DISTRICT_LOCATIONS
+
+    /** 所有縣市名稱（供第一層選擇） */
+    val COUNTY_NAMES: List<String> = COUNTY_LOCATIONS.map { it.displayName }
+
+    /** 取得某縣市下的所有鄉鎮區 */
+    fun districtsOf(county: String): List<WeatherLocation> =
+        DISTRICT_LOCATIONS.filter { it.countyName == county }
 
     // ── 查詢天氣 ──────────────────────────────────────────────────────────────
 
