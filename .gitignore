@@ -13,3 +13,9 @@ app/build/
 *.aab
 *.keystore
 groups/
+
+# 開發工具設定（不入 repo）
+.cursor/
+.gemini/
+.mcp.json
+CLAUDE.md
