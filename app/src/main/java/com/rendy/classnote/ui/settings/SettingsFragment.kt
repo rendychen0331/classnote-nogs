@@ -34,7 +34,6 @@ import com.rendy.classnote.data.GmailSyncWorker
 import com.rendy.classnote.data.ClassroomSyncWorker
 import com.rendy.classnote.data.GoogleAuthManager
 import com.rendy.classnote.data.WeatherPreferences
-import com.rendy.classnote.data.remote.WeatherApi
 import com.rendy.classnote.databinding.FragmentSettingsBinding
 import com.rendy.classnote.notification.WeatherNotificationScheduler
 import androidx.work.Constraints
@@ -871,7 +870,12 @@ class SettingsFragment : Fragment() {
     }
 
     private fun showWeatherLocationPicker() {
-        val locations = WeatherApi.LOCATIONS.map { it.displayName }.toTypedArray()
+        val saved = weatherPrefs.savedLocations
+        if (saved.isEmpty()) {
+            Toast.makeText(requireContext(), getString(R.string.weather_no_locations), Toast.LENGTH_SHORT).show()
+            return
+        }
+        val locations = saved.toTypedArray()
         val current = locations.indexOfFirst { it == weatherPrefs.weatherNotifLocation }
 
         MaterialAlertDialogBuilder(requireContext())
