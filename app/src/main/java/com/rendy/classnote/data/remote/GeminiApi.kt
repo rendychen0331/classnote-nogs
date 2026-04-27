@@ -23,7 +23,7 @@ object GeminiApi {
 
 嚴格規則：
 1. 只能使用通知文字中明確出現的資訊，絕對不能猜測、推測或補充通知裡沒有的內容。
-2. 截止日期（dueDate）和時間（dueTime）：通知中有提到日期或時間時必須填入（包含「明天」「下週」等相對日期需換算為絕對日期），沒有提到才填 null。
+2. 截止日期（dueDate）和時間（dueTime）：通知中有提到日期或時間時必須填入，包含相對時間（「明天」「下週」「等下X分」「X分後」「X分鐘後」等）皆需換算為絕對日期/時間，沒有提到才填 null。
 3. title 必須使用通知中的事件名稱，不得自行創造或修改。
 4. 沒有明確的待辦、截止、提醒等時間性意圖時，回傳 isEvent:false（例如純廣告、新聞、聊天訊息）。
 5. 只回傳純 JSON，不含任何解釋、標記符號或多餘文字。"""
@@ -62,15 +62,18 @@ object GeminiApi {
     }
 
     private fun buildBatchPrompt(inputs: List<NotificationInput>): String {
-        val today = java.time.LocalDate.now().toString()  // YYYY-MM-DD
+        val now = java.time.LocalDateTime.now()
+        val today = now.toLocalDate().toString()  // YYYY-MM-DD
+        val currentTime = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
         val notifList = inputs.mapIndexed { i, n ->
             "通知 ${i + 1}｜來源：${n.appLabel}｜標題：${n.title}｜內容：${n.text}"
         }.joinToString("\n")
 
         return """
 今天日期：$today
+現在時間：$currentTime
 
-以下是 ${inputs.size} 則手機通知，請逐一判斷是否為需要記錄的提醒事項（作業截止、考試、繳費期限、活動、吃藥、約會、任何有時間性的待辦等）。
+以下是 ${inputs.size} 則手機通知，請逐一判斷是否為需要記錄的提醒事項（作業截止、考試、繳費期限、活動、集合、吃藥、約會、任何有時間性的待辦等）。
 
 $notifList
 
@@ -82,9 +85,14 @@ $notifList
 
 category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、EVENT（活動）、REMINDER（其他）
 
+時間換算規則：
+- 「等下X分」「X分後」「X分鐘後」→ 現在時間加上X分鐘，換算為 HH:MM
+- 「明天」「下週X」等相對日期 → 換算為絕對日期 YYYY-MM-DD
+- 「今天下午X點」「晚上X點」等 → 換算為 HH:MM 24小時制
+
 示例（2 則通知）：
 [
-  {"isEvent":true,"title":"第三章習題","dueDate":"2026-05-10","dueTime":"23:59","category":"HOMEWORK","note":"請完成所有題目"},
+  {"isEvent":true,"title":"音樂教室集合","dueDate":"2026-04-27","dueTime":"14:30","category":"EVENT","note":"一部全體在音樂教室集合"},
   {"isEvent":false}
 ]
 
