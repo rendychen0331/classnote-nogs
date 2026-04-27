@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.system.measureTimeMillis
 
 /**
  * @param displayName 顯示給使用者的名稱，例如「臺北市 中正區」或「臺北市」
@@ -146,35 +147,47 @@ object WeatherApi {
 
     private suspend fun fetchForecastForLocation(location: WeatherLocation, apiKey: String): Result<List<ForecastItem>> =
         withContext(Dispatchers.IO) {
-            try {
-                val elements = if (location.datasetId == "F-C0032-001")
-                    "Wx,PoP,MinT,MaxT,CI"
-                else
-                    "天氣現象,最高溫度,最低溫度,12小時降雨機率"
-                val url = URL(
-                    "$BASE_URL/${location.datasetId}" +
-                        "?Authorization=$apiKey" +
-                        "&elementName=${java.net.URLEncoder.encode(elements, "UTF-8")}"
-                )
-                val conn = (url.openConnection() as HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    connectTimeout = 10_000
-                    readTimeout = 15_000
-                }
-                val code = conn.responseCode
-                if (code != 200) return@withContext Result.failure(Exception("HTTP $code"))
-                val json = conn.inputStream.bufferedReader().readText()
-                conn.disconnect()
+            var result: Result<List<ForecastItem>> = Result.failure(Exception("未執行"))
+            val duration = measureTimeMillis {
+                try {
+                    val elements = if (location.datasetId == "F-C0032-001")
+                        "Wx,PoP,MinT,MaxT,CI"
+                    else
+                        "天氣現象,最高溫度,最低溫度,12小時降雨機率"
+                    val url = URL(
+                        "$BASE_URL/${location.datasetId}" +
+                            "?Authorization=$apiKey" +
+                            "&elementName=${java.net.URLEncoder.encode(elements, "UTF-8")}"
+                    )
+                    val conn = (url.openConnection() as HttpURLConnection).apply {
+                        requestMethod = "GET"
+                        connectTimeout = 10_000
+                        readTimeout = 15_000
+                    }
+                    val code = conn.responseCode
+                    if (code != 200) {
+                        result = Result.failure(Exception("HTTP $code"))
+                        return@measureTimeMillis
+                    }
+                    val json = conn.inputStream.bufferedReader().readText()
+                    conn.disconnect()
 
-                val forecasts = if (location.datasetId == "F-C0032-001") {
-                    parseCountyForecast(json, location.apiName)
-                } else {
-                    parseDistrictForecast(json, location.apiName)
+                    val forecasts = if (location.datasetId == "F-C0032-001") {
+                        parseCountyForecast(json, location.apiName)
+                    } else {
+                        parseDistrictForecast(json, location.apiName)
+                    }
+                    result = Result.success(forecasts)
+                } catch (e: Exception) {
+                    result = Result.failure(e)
                 }
-                Result.success(forecasts)
-            } catch (e: Exception) {
-                Result.failure(e)
             }
+            ApiLogger.log(
+                "CWA(天氣)", location.displayName,
+                if (result.isSuccess) "success(${result.getOrNull()?.size}筆)" else result.exceptionOrNull()?.message,
+                duration, result.isSuccess
+            )
+            result
         }
 
     // ── 縣市解析（F-C0032-001） ────────────────────────────────────────────────

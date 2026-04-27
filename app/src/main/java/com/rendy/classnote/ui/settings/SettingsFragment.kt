@@ -23,6 +23,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.app.TimePickerDialog
 import com.rendy.classnote.ui.BiometricHelper
+import com.rendy.classnote.ui.settings.ApiLogAdapter
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.R
 import com.rendy.classnote.data.AppPreferences
@@ -132,6 +133,7 @@ class SettingsFragment : Fragment() {
         setupClassroomSection()
         setupWeatherNotificationSection()
         setupNotificationListenerSection()
+        setupApiLogSection()
     }
 
     override fun onResume() {
@@ -1202,6 +1204,35 @@ class SettingsFragment : Fragment() {
         else
             getString(R.string.settings_ai_notify_access_denied)
         binding.tvNotifListenerStatus.setTextColor(if (granted) grantedColor else notGrantedColor)
+    }
+
+    // ── API 呼叫記錄 ──────────────────────────────────────────────────────────
+
+    private fun setupApiLogSection() {
+        binding.btnViewApiLogs.setOnClickListener { showApiLogs() }
+    }
+
+    private fun showApiLogs() {
+        val app = requireActivity().application as ClassNoteApplication
+        viewLifecycleOwner.lifecycleScope.launch {
+            val logs = app.database.apiLogDao().getRecentLogs()
+            val rv = androidx.recyclerview.widget.RecyclerView(requireContext()).apply {
+                layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+                adapter = ApiLogAdapter(logs)
+                setPadding(0, 8, 0, 8)
+            }
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("API 呼叫記錄（最近 ${logs.size} 筆）")
+                .setView(rv)
+                .setNeutralButton("清除全部") { _, _ ->
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        app.database.apiLogDao().clearAll()
+                        Toast.makeText(requireContext(), "已清除", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setPositiveButton("關閉", null)
+                .show()
+        }
     }
 
     override fun onDestroyView() {

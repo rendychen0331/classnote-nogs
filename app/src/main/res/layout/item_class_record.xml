@@ -27,8 +27,18 @@
                 android:id="@+id/tvRecordDate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:text="" />
+
+            <TextView
+                android:id="@+id/tvRecordTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:textAppearance="?attr/textAppearanceTitleSmall"
                 android:textColor="?attr/colorOnSurface"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:text="" />
 
             <TextView

@@ -10,6 +10,7 @@ import java.io.File
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.system.measureTimeMillis
 
 object GeminiApi {
 
@@ -18,6 +19,8 @@ object GeminiApi {
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
     private const val SUMMARY_ENDPOINT =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
+    private const val TITLE_ENDPOINT =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent"
 
     private const val SYSTEM_INSTRUCTION = """你是一個提醒事項擷取助理，專門從手機通知中提取需要記錄的待辦事項或提醒。
 
@@ -51,12 +54,21 @@ object GeminiApi {
         inputs: List<NotificationInput>
     ): List<EventInfo?> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank() || inputs.isEmpty()) return@withContext emptyList()
-        try {
-            val prompt = buildBatchPrompt(inputs)
-            val responseJson = callGemini(apiKey, prompt, NOTIFICATION_ENDPOINT) ?: return@withContext List(inputs.size) { null }
-            parseBatchResponse(responseJson, inputs.size)
-        } catch (e: Exception) {
-            Log.e(TAG, "analyzeNotifications failed", e)
+        val prompt = buildBatchPrompt(inputs)
+        var responseJson: String? = null
+        var success = false
+        val duration = measureTimeMillis {
+            try {
+                responseJson = callGemini(apiKey, prompt, NOTIFICATION_ENDPOINT)
+                success = responseJson != null
+            } catch (e: Exception) {
+                Log.e(TAG, "analyzeNotifications failed", e)
+            }
+        }
+        ApiLogger.log("gemini-flash(通知辨識)", prompt.take(300), responseJson?.take(300), duration, success)
+        if (!success) return@withContext List(inputs.size) { null }
+        try { parseBatchResponse(responseJson!!, inputs.size) } catch (e: Exception) {
+            Log.e(TAG, "parseBatchResponse failed", e)
             List(inputs.size) { null }
         }
     }
@@ -145,115 +157,186 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
      * 將音訊檔案 base64 inline 傳給 Gemini，回傳課堂重點摘要文字，失敗回傳 null。
      */
     suspend fun summarizeAudio(apiKey: String, audioPath: String): String? = withContext(Dispatchers.IO) {
-        try {
-            val file = File(audioPath)
-            val audioBytes = file.readBytes()
-            val base64Audio = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
+        var result: String? = null
+        val duration = measureTimeMillis {
+            try {
+                val file = File(audioPath)
+                val audioBytes = file.readBytes()
+                val base64Audio = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
 
-            val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            conn.doOutput = true
-            conn.connectTimeout = 30_000
-            conn.readTimeout = 120_000
+                val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                conn.doOutput = true
+                conn.connectTimeout = 30_000
+                conn.readTimeout = 120_000
 
-            val body = JSONObject().apply {
-                put("contents", JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("role", "user")
-                        put("parts", JSONArray().apply {
-                            put(JSONObject().apply {
-                                put("inlineData", JSONObject().apply {
-                                    put("mimeType", "audio/mp4")
-                                    put("data", base64Audio)
+                val body = JSONObject().apply {
+                    put("contents", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("role", "user")
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("inlineData", JSONObject().apply {
+                                        put("mimeType", "audio/mp4")
+                                        put("data", base64Audio)
+                                    })
                                 })
-                            })
-                            put(JSONObject().apply {
-                                put("text", "這是一段上課錄音，請用繁體中文整理出課堂重點筆記，以條列式呈現，每點不超過 50 字。若音訊無法辨識或內容不清楚，請直接說明。")
+                                put(JSONObject().apply {
+                                    put("text", "這是一段上課錄音，請用繁體中文整理出課堂重點筆記，以條列式呈現，每點不超過 50 字。若音訊無法辨識或內容不清楚，請直接說明。")
+                                })
                             })
                         })
                     })
-                })
-                put("generationConfig", JSONObject().apply {
-                    put("temperature", 0.3)
-                    put("maxOutputTokens", 1000)
-                })
-            }.toString()
+                    put("generationConfig", JSONObject().apply {
+                        put("temperature", 0.3)
+                        put("maxOutputTokens", 1000)
+                    })
+                }.toString()
 
-            OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
+                OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
 
-            val code = conn.responseCode
-            if (code != 200) {
-                Log.e(TAG, "summarizeAudio HTTP $code: ${conn.errorStream?.bufferedReader()?.readText()}")
-                return@withContext null
+                val code = conn.responseCode
+                if (code != 200) {
+                    val err = conn.errorStream?.bufferedReader()?.readText()
+                    Log.e(TAG, "summarizeAudio HTTP $code: $err")
+                    ApiLogger.log("gemini-flash(音訊摘要)", "[audio:${file.name}]", "HTTP $code: $err", 0, false)
+                    return@measureTimeMillis
+                }
+
+                val responseText = conn.inputStream.bufferedReader(Charsets.UTF_8).readText()
+                result = JSONObject(responseText)
+                    .getJSONArray("candidates")
+                    .getJSONObject(0)
+                    .getJSONObject("content")
+                    .getJSONArray("parts")
+                    .getJSONObject(0)
+                    .getString("text")
+                    .trim()
+            } catch (e: Exception) {
+                Log.e(TAG, "summarizeAudio failed", e)
             }
-
-            val responseText = conn.inputStream.bufferedReader(Charsets.UTF_8).readText()
-            JSONObject(responseText)
-                .getJSONArray("candidates")
-                .getJSONObject(0)
-                .getJSONObject("content")
-                .getJSONArray("parts")
-                .getJSONObject(0)
-                .getString("text")
-                .trim()
-        } catch (e: Exception) {
-            Log.e(TAG, "summarizeAudio failed", e)
-            null
         }
+        ApiLogger.log("gemini-flash(音訊摘要)", "[audio]", result?.take(300), duration, result != null)
+        result
     }
 
     /**
      * 將多則筆記內容整理成一份課堂重點總結，回傳繁體中文條列摘要，失敗回傳 null。
      */
     suspend fun summarizeSession(apiKey: String, combinedContent: String): String? = withContext(Dispatchers.IO) {
-        try {
-            val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            conn.doOutput = true
-            conn.connectTimeout = 30_000
-            conn.readTimeout = 60_000
+        var result: String? = null
+        val duration = measureTimeMillis {
+            try {
+                val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                conn.doOutput = true
+                conn.connectTimeout = 30_000
+                conn.readTimeout = 60_000
 
-            val body = JSONObject().apply {
-                put("contents", JSONArray().apply {
-                    put(JSONObject().apply {
-                        put("role", "user")
-                        put("parts", JSONArray().apply {
-                            put(JSONObject().apply {
-                                put("text", "以下是一堂課的所有筆記內容，請用繁體中文整理成課堂重點總結，以條列式呈現，每點不超過 60 字：\n\n$combinedContent")
+                val body = JSONObject().apply {
+                    put("contents", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("role", "user")
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("text", "以下是一堂課的所有筆記內容，請用繁體中文整理成課堂重點總結，以條列式呈現，每點不超過 60 字：\n\n$combinedContent")
+                                })
                             })
                         })
                     })
-                })
-                put("generationConfig", JSONObject().apply {
-                    put("temperature", 0.3)
-                    put("maxOutputTokens", 800)
-                })
-            }.toString()
+                    put("generationConfig", JSONObject().apply {
+                        put("temperature", 0.3)
+                        put("maxOutputTokens", 800)
+                    })
+                }.toString()
 
-            OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
+                OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
 
-            val code = conn.responseCode
-            if (code != 200) {
-                Log.e(TAG, "summarizeSession HTTP $code: ${conn.errorStream?.bufferedReader()?.readText()}")
-                return@withContext null
+                val code = conn.responseCode
+                if (code != 200) {
+                    val err = conn.errorStream?.bufferedReader()?.readText()
+                    Log.e(TAG, "summarizeSession HTTP $code: $err")
+                    ApiLogger.log("gemini-flash(課堂總結)", combinedContent.take(200), "HTTP $code: $err", 0, false)
+                    return@measureTimeMillis
+                }
+
+                result = JSONObject(conn.inputStream.bufferedReader(Charsets.UTF_8).readText())
+                    .getJSONArray("candidates")
+                    .getJSONObject(0)
+                    .getJSONObject("content")
+                    .getJSONArray("parts")
+                    .getJSONObject(0)
+                    .getString("text")
+                    .trim()
+            } catch (e: Exception) {
+                Log.e(TAG, "summarizeSession failed", e)
             }
-
-            JSONObject(conn.inputStream.bufferedReader(Charsets.UTF_8).readText())
-                .getJSONArray("candidates")
-                .getJSONObject(0)
-                .getJSONObject("content")
-                .getJSONArray("parts")
-                .getJSONObject(0)
-                .getString("text")
-                .trim()
-        } catch (e: Exception) {
-            Log.e(TAG, "summarizeSession failed", e)
-            null
         }
+        ApiLogger.log("gemini-flash(課堂總結)", combinedContent.take(200), result?.take(300), duration, result != null)
+        result
+    }
+
+    /**
+     * 使用 Gemma 4 根據筆記內容生成標題，回傳不超過 20 字的繁體中文標題，失敗回傳 null。
+     */
+    suspend fun generateTitle(apiKey: String, content: String): String? = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank() || content.isBlank()) return@withContext null
+        var result: String? = null
+        val duration = measureTimeMillis {
+            try {
+                val prompt = "以下是一則課堂筆記內容，請用繁體中文生成一個簡短的標題（不超過 20 字，不加引號，不加標點符號結尾）：\n\n$content"
+                val url = URL("$TITLE_ENDPOINT?key=$apiKey")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                conn.doOutput = true
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 30_000
+
+                val body = JSONObject().apply {
+                    put("contents", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("role", "user")
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply { put("text", prompt) })
+                            })
+                        })
+                    })
+                    put("generationConfig", JSONObject().apply {
+                        put("temperature", 0.3)
+                        put("maxOutputTokens", 60)
+                    })
+                }.toString()
+
+                OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
+
+                val code = conn.responseCode
+                if (code != 200) {
+                    val err = conn.errorStream?.bufferedReader()?.readText()
+                    Log.e(TAG, "generateTitle HTTP $code: $err")
+                    ApiLogger.log("gemma4(標題生成)", content.take(200), "HTTP $code: $err", 0, false)
+                    return@measureTimeMillis
+                }
+
+                result = JSONObject(conn.inputStream.bufferedReader(Charsets.UTF_8).readText())
+                    .getJSONArray("candidates")
+                    .getJSONObject(0)
+                    .getJSONObject("content")
+                    .getJSONArray("parts")
+                    .getJSONObject(0)
+                    .getString("text")
+                    .trim()
+                    .take(30)
+            } catch (e: Exception) {
+                Log.e(TAG, "generateTitle failed", e)
+            }
+        }
+        ApiLogger.log("gemma4(標題生成)", content.take(200), result, duration, result != null)
+        result
     }
 
     private fun parseBatchResponse(json: String, expectedCount: Int): List<EventInfo?> {

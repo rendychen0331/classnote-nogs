@@ -16,6 +16,7 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
 import com.rendy.classnote.data.local.ClassNoteDatabase
+import com.rendy.classnote.data.remote.ApiLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
@@ -99,16 +100,20 @@ object DriveBackupManager {
                     .execute()
 
                 Log.d(TAG, "Backup successful")
+                ApiLogger.log("GoogleDrive(備份)", "backup", "success", 0, true)
                 Result.Success
             } catch (e: UserRecoverableAuthIOException) {
                 Log.w(TAG, "Backup auth required", e)
+                ApiLogger.log("GoogleDrive(備份)", "backup", "需要重新授權", 0, false)
                 Result.AuthRequired(e.intent)
             } catch (e: GoogleJsonResponseException) {
                 val reason = e.details?.errors?.firstOrNull()?.reason ?: "unknown"
                 Log.e(TAG, "Backup Drive API error: ${e.statusCode} reason=$reason", e)
+                ApiLogger.log("GoogleDrive(備份)", "backup", "HTTP ${e.statusCode} $reason", 0, false)
                 Result.Error("備份失敗 (${e.statusCode} $reason)")
             } catch (e: Exception) {
                 Log.e(TAG, "Backup failed: ${e.javaClass.simpleName}", e)
+                ApiLogger.log("GoogleDrive(備份)", "backup", e.message ?: "未知錯誤", 0, false)
                 Result.Error(e.message ?: "備份失敗")
             }
         }
@@ -156,12 +161,15 @@ object DriveBackupManager {
                 }
 
                 Log.d(TAG, "Restore successful")
+                ApiLogger.log("GoogleDrive(還原)", "restore", "success", 0, true)
                 Result.Success
             } catch (e: UserRecoverableAuthIOException) {
                 Log.w(TAG, "Restore auth required", e)
+                ApiLogger.log("GoogleDrive(還原)", "restore", "需要重新授權", 0, false)
                 Result.AuthRequired(e.intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Restore failed", e)
+                ApiLogger.log("GoogleDrive(還原)", "restore", e.message ?: "未知錯誤", 0, false)
                 Result.Error(e.message ?: "還原失敗")
             }
         }

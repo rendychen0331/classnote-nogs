@@ -21,9 +21,10 @@ import kotlinx.coroutines.launch
         ReminderNotificationEntity::class,
         com.rendy.classnote.data.local.entity.FormulaEntity::class,
         com.rendy.classnote.data.local.entity.ClassRecordEntity::class,
-        com.rendy.classnote.data.local.entity.ClassRecordMediaEntity::class
+        com.rendy.classnote.data.local.entity.ClassRecordMediaEntity::class,
+        com.rendy.classnote.data.local.entity.ApiLogEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class ClassNoteDatabase : RoomDatabase() {
@@ -36,6 +37,7 @@ abstract class ClassNoteDatabase : RoomDatabase() {
     abstract fun formulaDao(): com.rendy.classnote.data.local.dao.FormulaDao
     abstract fun classRecordDao(): com.rendy.classnote.data.local.dao.ClassRecordDao
     abstract fun classRecordMediaDao(): com.rendy.classnote.data.local.dao.ClassRecordMediaDao
+    abstract fun apiLogDao(): com.rendy.classnote.data.local.dao.ApiLogDao
 
     companion object {
         @Volatile
@@ -126,6 +128,23 @@ abstract class ClassNoteDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE class_records ADD COLUMN title TEXT NOT NULL DEFAULT ''")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS api_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        timestamp INTEGER NOT NULL,
+                        model TEXT NOT NULL,
+                        requestPreview TEXT NOT NULL DEFAULT '',
+                        responsePreview TEXT NOT NULL DEFAULT '',
+                        durationMs INTEGER NOT NULL DEFAULT 0,
+                        isSuccess INTEGER NOT NULL DEFAULT 1
+                    )
+                """.trimIndent())
+            }
+        }
+
         fun closeDatabase() {
             INSTANCE?.close()
             INSTANCE = null
@@ -139,7 +158,7 @@ abstract class ClassNoteDatabase : RoomDatabase() {
                     "classnote_database"
                 )
                     .addCallback(DatabaseCallback())
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                     .build()
                 INSTANCE = instance
                 instance

@@ -16,6 +16,7 @@ import com.rendy.classnote.data.local.dao.ReminderDao
 import com.rendy.classnote.data.local.dao.ReminderNotificationDao
 import com.rendy.classnote.data.local.entity.ReminderEntity
 import com.rendy.classnote.data.local.entity.ReminderNotificationEntity
+import com.rendy.classnote.data.remote.ApiLogger
 import com.rendy.classnote.notification.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -137,9 +138,11 @@ object GmailSyncManager {
                     }
                 }
 
+                ApiLogger.log("Gmail(同步)", "sync", "匯入$imported 略過$skipped", 0, true)
                 SyncResult.Success(imported, skipped)
             } catch (e: Exception) {
                 Log.e(TAG, "Sync failed", e)
+                ApiLogger.log("Gmail(同步)", "sync", e.message ?: "同步失敗", 0, false)
                 SyncResult.Error(e.message ?: "同步失敗")
             }
         }

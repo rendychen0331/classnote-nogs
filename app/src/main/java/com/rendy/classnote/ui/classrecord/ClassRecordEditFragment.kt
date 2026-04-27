@@ -31,7 +31,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.R
+import com.rendy.classnote.data.AppPreferences
 import com.rendy.classnote.data.local.entity.ClassRecordEntity
+import com.rendy.classnote.data.remote.GeminiApi
 import com.rendy.classnote.data.local.entity.ClassRecordMediaEntity
 import com.rendy.classnote.databinding.FragmentClassRecordEditBinding
 import kotlinx.coroutines.launch
@@ -123,9 +125,13 @@ class ClassRecordEditFragment : Fragment() {
         binding.tilTimeLabel.setEndIconOnClickListener { pickTime() }
         binding.btnSaveRecord.setOnClickListener { saveRecord() }
 
+        val isTextType = args.noteType == "text" || args.noteType.isBlank()
         val isPhotoType = args.noteType == "photo" || args.noteType == "gallery"
         if (isPhotoType) {
             binding.cardNoteEditor.visibility = View.GONE
+        }
+        if (isTextType) {
+            binding.btnGenerateTitle.visibility = View.VISIBLE
         }
 
         setupNoteEditor()
@@ -165,6 +171,8 @@ class ClassRecordEditFragment : Fragment() {
         }
         binding.webViewNote.loadUrl("file:///android_asset/note_editor/editor.html")
 
+        binding.btnGenerateTitle.setOnClickListener { generateTitle() }
+
         binding.btnFormatBold.setOnClickListener { execNoteCmd("bold") }
         binding.btnFormatItalic.setOnClickListener { execNoteCmd("italic") }
         binding.btnFormatUnderline.setOnClickListener { execNoteCmd("underline") }
@@ -184,6 +192,20 @@ class ClassRecordEditFragment : Fragment() {
     private fun escapeForJs(s: String) =
         s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "")
 
+    private fun generateTitle() {
+        val content = noteEditorBridge.content.replace(Regex("<[^>]+>"), "").trim()
+        if (content.isBlank()) { Toast.makeText(requireContext(), "請先輸入筆記內容", Toast.LENGTH_SHORT).show(); return }
+        val apiKey = AppPreferences(requireContext()).geminiApiKey
+        if (apiKey.isBlank()) { Toast.makeText(requireContext(), "請先設定 Gemini API Key", Toast.LENGTH_SHORT).show(); return }
+        binding.btnGenerateTitle.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            val title = GeminiApi.generateTitle(apiKey, content)
+            binding.btnGenerateTitle.isEnabled = true
+            if (title != null) binding.etTitle.setText(title)
+            else Toast.makeText(requireContext(), "生成失敗，請稍後再試", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun openDrawingFragment() {
         val action = ClassRecordEditFragmentDirections.actionClassRecordEditToDrawing()
         findNavController().navigate(action)
@@ -196,6 +218,7 @@ class ClassRecordEditFragment : Fragment() {
             selectedDate = record.date
             binding.tvRecordDate.text = record.date
             binding.etTimeLabel.setText(record.timeLabel)
+            binding.etTitle.setText(record.title)
 
             noteEditorBridge.content = record.textNote
             if (notePageLoaded) {
@@ -363,6 +386,7 @@ class ClassRecordEditFragment : Fragment() {
             id = if (currentRecordId > 0) currentRecordId else 0,
             date = selectedDate,
             timeLabel = binding.etTimeLabel.text.toString().trim(),
+            title = binding.etTitle.text?.toString()?.trim().orEmpty(),
             textNote = noteEditorBridge.content,
             aiSummary = ""
         )

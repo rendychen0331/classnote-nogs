@@ -18,12 +18,15 @@ class ClassRecordAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: ClassRecordEntity) {
-            val timeStr = if (item.timeLabel.isNotBlank()) "  ·  ${item.timeLabel}" else ""
+            val timeStr = if (item.timeLabel.isNotBlank()) "  ${item.timeLabel}" else ""
             binding.tvRecordDate.text = "${item.date}$timeStr"
+
+            binding.tvRecordTitle.text = item.title
+            binding.tvRecordTitle.visibility = if (item.title.isNotBlank()) View.VISIBLE else View.GONE
 
             val preview = when {
                 item.aiSummary.isNotBlank() -> item.aiSummary.take(80)
-                item.textNote.isNotBlank() -> item.textNote.take(80)
+                item.textNote.isNotBlank() -> android.text.Html.fromHtml(item.textNote, android.text.Html.FROM_HTML_MODE_COMPACT).toString().trim().take(80)
                 else -> ""
             }
             binding.tvRecordNote.text = preview
