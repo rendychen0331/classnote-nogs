@@ -18,11 +18,15 @@
         android:background="?attr/selectableItemBackground" />
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilAudioTimeLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="48dp"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:hint="@string/class_record_time_label">
+        android:hint="@string/class_record_time_label"
+        app:endIconMode="custom"
+        app:endIconDrawable="@android:drawable/ic_menu_recent_history"
+        app:endIconContentDescription="選擇時間">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etAudioTimeLabel"
             android:layout_width="match_parent"

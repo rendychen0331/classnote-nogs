@@ -120,6 +120,7 @@ class ClassRecordEditFragment : Fragment() {
 
         binding.tvRecordDate.text = selectedDate
         binding.tvRecordDate.setOnClickListener { pickDate() }
+        binding.tilTimeLabel.setEndIconOnClickListener { pickTime() }
         binding.btnAiSummary.setOnClickListener { runAiSummary() }
         binding.btnSaveRecord.setOnClickListener { saveRecord() }
 
@@ -129,6 +130,10 @@ class ClassRecordEditFragment : Fragment() {
             currentRecordId = args.recordId
             loadRecord(args.recordId)
         } else {
+            val t = java.time.LocalTime.now()
+            val label = ClassPeriodUtils.detect(t.hour, t.minute)
+                ?: t.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            binding.etTimeLabel.setText(label)
             when (args.noteType) {
                 "photo" -> checkCameraAndLaunch()
                 "gallery" -> launchGallery()
@@ -213,6 +218,15 @@ class ClassRecordEditFragment : Fragment() {
             selectedDate = LocalDate.of(year, month + 1, day).format(dateFormatter)
             binding.tvRecordDate.text = selectedDate
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+    }
+
+    private fun pickTime() {
+        val cal = Calendar.getInstance()
+        android.app.TimePickerDialog(requireContext(), { _, hour, minute ->
+            val timeStr = "%02d:%02d".format(hour, minute)
+            binding.etTimeLabel.setText(timeStr)
+            binding.etTimeLabel.setSelection(timeStr.length)
+        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), true).show()
     }
 
     private fun checkCameraAndLaunch() {
