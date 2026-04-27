@@ -122,6 +122,11 @@ class ClassRecordEditFragment : Fragment() {
         binding.tilTimeLabel.setEndIconOnClickListener { pickTime() }
         binding.btnSaveRecord.setOnClickListener { saveRecord() }
 
+        val isPhotoType = args.noteType == "photo" || args.noteType == "gallery"
+        if (isPhotoType) {
+            binding.cardNoteEditor.visibility = View.GONE
+        }
+
         setupNoteEditor()
 
         if (args.recordId > 0) {

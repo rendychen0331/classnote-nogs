@@ -50,6 +50,7 @@
 
         <!-- 文字筆記（富文字編輯器） -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardNoteEditor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
