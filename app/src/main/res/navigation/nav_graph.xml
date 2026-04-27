@@ -118,6 +118,12 @@
         <action
             android:id="@+id/actionClassRecordListFragmentToClassRecordEditFragment"
             app:destination="@id/classRecordEditFragment" />
+        <action
+            android:id="@+id/actionClassRecordListToAudioRecord"
+            app:destination="@id/audioRecordFragment" />
+        <action
+            android:id="@+id/actionClassRecordListToDrawing"
+            app:destination="@id/drawingFragment" />
     </fragment>
 
     <fragment
@@ -129,7 +135,35 @@
             android:name="recordId"
             app:argType="long"
             android:defaultValue="-1L" />
+        <argument
+            android:name="noteType"
+            app:argType="string"
+            android:defaultValue="text" />
+        <action
+            android:id="@+id/actionClassRecordEditToDrawing"
+            app:destination="@id/drawingFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/drawingFragment"
+        android:name="com.rendy.classnote.ui.classrecord.DrawingFragment"
+        android:label="手寫筆記"
+        tools:layout="@layout/fragment_drawing">
+        <argument
+            android:name="existingPath"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="createRecord"
+            app:argType="boolean"
+            android:defaultValue="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/audioRecordFragment"
+        android:name="com.rendy.classnote.ui.classrecord.AudioRecordFragment"
+        android:label="錄音筆記"
+        tools:layout="@layout/fragment_audio_record" />
 
     <!-- ── 公式本 ── -->
     <fragment

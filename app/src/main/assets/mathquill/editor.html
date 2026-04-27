@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<link rel="stylesheet" href="mathquill.min.css">
+<script src="../jquery.min.js"></script>
+<script src="mathquill.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: transparent; height: 100%; }
+  #math-wrapper {
+    padding: 8px 12px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+  .mq-editable-field {
+    width: 100%;
+    min-height: 60px;
+    font-size: 22px !important;
+    border: none !important;
+    outline: none !important;
+    cursor: text;
+  }
+  .mq-editable-field.mq-focused { box-shadow: none !important; }
+  .mq-fraction { font-size: 18px; }
+  .mq-sqrt-prefix { font-size: 22px; }
+</style>
+</head>
+<body>
+<div id="math-wrapper">
+  <span id="math-input"></span>
+</div>
+<script>
+var MQ = MathQuill.getInterface(2);
+var field = MQ.MathField(document.getElementById('math-input'), {
+  spaceBehavesLikeTab: true,
+  leftRightIntoCmdGoes: 'up',
+  handlers: {
+    edit: function() {
+      try { Android.onLatexChange(field.latex()); } catch(e) {}
+    }
+  }
+});
+
+$('#math-input').css('width', '100%');
+
+function suppressKeyboard() {
+  var ta = document.querySelector('.mq-textarea textarea');
+  if (ta) {
+    ta.setAttribute('inputmode', 'none');
+    ta.setAttribute('autocomplete', 'off');
+    ta.setAttribute('autocorrect', 'off');
+    ta.setAttribute('autocapitalize', 'off');
+    ta.setAttribute('spellcheck', 'false');
+  }
+}
+
+setTimeout(suppressKeyboard, 200);
+document.addEventListener('focus', suppressKeyboard, true);
+
+function insertCmd(cmd) { field.cmd(cmd); field.focus(); suppressKeyboard(); }
+function writeLatex(latex) { field.write(latex); field.focus(); suppressKeyboard(); }
+function keystroke(key) { field.keystroke(key); field.focus(); suppressKeyboard(); }
+function setLatex(latex) { field.latex(latex); suppressKeyboard(); }
+function getLatex() { return field.latex(); }
+function focusField() { field.focus(); suppressKeyboard(); }
+</script>
+</body>
+</html>

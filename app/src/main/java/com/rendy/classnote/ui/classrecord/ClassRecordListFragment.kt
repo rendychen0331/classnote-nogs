@@ -55,10 +55,34 @@ class ClassRecordListFragment : Fragment() {
         binding.rvClassRecords.adapter = adapter
 
         binding.fabAddRecord.setOnClickListener {
-            findNavController().navigate(
-                ClassRecordListFragmentDirections
-                    .actionClassRecordListFragmentToClassRecordEditFragment(-1L)
-            )
+            val options = arrayOf("📝  文字筆記", "✏️  手寫筆記", "📷  拍照筆記", "🖼  相簿匯入", "🎙  錄音筆記")
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("新增上課紀錄")
+                .setItems(options) { _, idx ->
+                    when (idx) {
+                        0 -> findNavController().navigate(
+                            ClassRecordListFragmentDirections
+                                .actionClassRecordListFragmentToClassRecordEditFragment(-1L, "text")
+                        )
+                        1 -> findNavController().navigate(
+                            ClassRecordListFragmentDirections
+                                .actionClassRecordListToDrawing(createRecord = true)
+                        )
+                        2 -> findNavController().navigate(
+                            ClassRecordListFragmentDirections
+                                .actionClassRecordListFragmentToClassRecordEditFragment(-1L, "photo")
+                        )
+                        3 -> findNavController().navigate(
+                            ClassRecordListFragmentDirections
+                                .actionClassRecordListFragmentToClassRecordEditFragment(-1L, "gallery")
+                        )
+                        4 -> findNavController().navigate(
+                            ClassRecordListFragmentDirections
+                                .actionClassRecordListToAudioRecord()
+                        )
+                    }
+                }
+                .show()
         }
 
         viewLifecycleOwner.lifecycleScope.launch {

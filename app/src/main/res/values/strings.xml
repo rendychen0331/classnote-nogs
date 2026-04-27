@@ -241,6 +241,8 @@
     <string name="class_record_ai_summary">AI 總結錄音</string>
     <string name="class_record_summarizing">總結中...</string>
     <string name="class_record_ai_summary_label">AI 課堂總結</string>
+    <string name="class_record_add_drawing">手寫筆記</string>
+    <string name="class_record_pick_gallery">相簿匯入</string>
 
     <!-- Classroom 同步 -->
     <string name="settings_section_classroom">Classroom 作業同步</string>

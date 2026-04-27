@@ -1,6 +1,7 @@
 package com.rendy.classnote.ui.classrecord
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
@@ -12,6 +13,8 @@ import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.JavascriptInterface
+import android.webkit.WebViewClient
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -20,6 +23,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -32,6 +36,7 @@ import com.rendy.classnote.data.remote.GeminiApi
 import com.rendy.classnote.databinding.FragmentClassRecordEditBinding
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileOutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -51,12 +56,20 @@ class ClassRecordEditFragment : Fragment() {
     private var selectedDate: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
     private var currentRecordId: Long = -1L
 
-    // Existing media loaded from DB (read-only display)
     private val existingMediaItems = mutableListOf<ClassRecordMediaEntity>()
-
-    // New media added this session
     private val newPhotoPaths = mutableListOf<String>()
-    private val newAudioItems = mutableListOf<Pair<String, Long>>() // filePath to durationMs
+    private val newAudioItems = mutableListOf<Pair<String, Long>>()
+    private val newDrawingPaths = mutableListOf<String>()
+
+    // WebView note editor bridge
+    inner class NoteEditorBridge {
+        @Volatile var content: String = ""
+        @JavascriptInterface
+        fun onChanged(html: String) { content = html }
+    }
+    private lateinit var noteEditorBridge: NoteEditorBridge
+    private var notePageLoaded = false
+    private var pendingNoteHtml = ""
 
     // Audio recording
     private var mediaRecorder: MediaRecorder? = null
@@ -68,10 +81,13 @@ class ClassRecordEditFragment : Fragment() {
     private var pendingPhotoPath: String? = null
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success && pendingPhotoPath != null) {
-            newPhotoPaths.add(pendingPhotoPath!!)
-            addPhotoThumbnail(pendingPhotoPath!!)
+        if (success) {
+            pendingPhotoPath?.let { newPhotoPaths.add(it); addPhotoThumbnail(it) }
         }
+    }
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { importImageFromUri(it) }
     }
 
     private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -84,6 +100,16 @@ class ClassRecordEditFragment : Fragment() {
         else Toast.makeText(requireContext(), "需要錄音權限", Toast.LENGTH_SHORT).show()
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setFragmentResultListener(DrawingFragment.RESULT_KEY) { _, bundle ->
+            bundle.getString(DrawingFragment.EXTRA_PATH)?.let { path ->
+                newDrawingPaths.add(path)
+                addDrawingThumbnail(path)
+            }
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentClassRecordEditBinding.inflate(inflater, container, false)
         return binding.root
@@ -94,15 +120,63 @@ class ClassRecordEditFragment : Fragment() {
 
         binding.tvRecordDate.text = selectedDate
         binding.tvRecordDate.setOnClickListener { pickDate() }
-        binding.btnTakePhoto.setOnClickListener { checkCameraAndLaunch() }
-        binding.btnRecord.setOnClickListener { toggleRecording() }
         binding.btnAiSummary.setOnClickListener { runAiSummary() }
         binding.btnSaveRecord.setOnClickListener { saveRecord() }
+
+        setupNoteEditor()
 
         if (args.recordId > 0) {
             currentRecordId = args.recordId
             loadRecord(args.recordId)
+        } else {
+            when (args.noteType) {
+                "photo" -> checkCameraAndLaunch()
+                "gallery" -> launchGallery()
+                "audio" -> checkAudioAndRecord()
+                "drawing" -> openDrawingFragment()
+                else -> Unit
+            }
         }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun setupNoteEditor() {
+        noteEditorBridge = NoteEditorBridge()
+        binding.webViewNote.settings.javaScriptEnabled = true
+        binding.webViewNote.addJavascriptInterface(noteEditorBridge, "AndroidBridge")
+        binding.webViewNote.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: android.webkit.WebView?, url: String?) {
+                notePageLoaded = true
+                if (pendingNoteHtml.isNotEmpty()) {
+                    view?.evaluateJavascript("setContent('${escapeForJs(pendingNoteHtml)}')", null)
+                    pendingNoteHtml = ""
+                }
+            }
+        }
+        binding.webViewNote.loadUrl("file:///android_asset/note_editor/editor.html")
+
+        binding.btnFormatBold.setOnClickListener { execNoteCmd("bold") }
+        binding.btnFormatItalic.setOnClickListener { execNoteCmd("italic") }
+        binding.btnFormatUnderline.setOnClickListener { execNoteCmd("underline") }
+        binding.btnFormatBullet.setOnClickListener { execNoteCmd("insertUnorderedList") }
+        binding.btnFormatOrdered.setOnClickListener { execNoteCmd("insertOrderedList") }
+        binding.btnFormatTable.setOnClickListener {
+            binding.webViewNote.evaluateJavascript("insertTable(3,3)", null)
+        }
+        binding.btnFormatUndo.setOnClickListener { execNoteCmd("undo") }
+        binding.btnFormatRedo.setOnClickListener { execNoteCmd("redo") }
+    }
+
+    private fun execNoteCmd(cmd: String) {
+        binding.webViewNote.evaluateJavascript("exec('$cmd')", null)
+    }
+
+    private fun escapeForJs(s: String) =
+        s.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "")
+
+    private fun openDrawingFragment() {
+        val action = ClassRecordEditFragmentDirections.actionClassRecordEditToDrawing()
+        findNavController().navigate(action)
     }
 
     private fun loadRecord(id: Long) {
@@ -112,7 +186,14 @@ class ClassRecordEditFragment : Fragment() {
             selectedDate = record.date
             binding.tvRecordDate.text = record.date
             binding.etTimeLabel.setText(record.timeLabel)
-            binding.etTextNote.setText(record.textNote)
+
+            noteEditorBridge.content = record.textNote
+            if (notePageLoaded) {
+                binding.webViewNote.evaluateJavascript("setContent('${escapeForJs(record.textNote)}')", null)
+            } else {
+                pendingNoteHtml = record.textNote
+            }
+
             if (record.aiSummary.isNotBlank()) {
                 binding.tvAiSummary.text = record.aiSummary
                 binding.cardAiSummary.visibility = View.VISIBLE
@@ -121,6 +202,7 @@ class ClassRecordEditFragment : Fragment() {
             existingMediaItems.addAll(mediaItems)
             mediaItems.filter { it.type == "photo" }.forEach { addPhotoThumbnail(it.filePath) }
             mediaItems.filter { it.type == "audio" }.forEach { addAudioRow(it.filePath, it.durationMs) }
+            mediaItems.filter { it.type == "drawing" }.forEach { addDrawingThumbnail(it.filePath) }
             updateAiButton()
         }
     }
@@ -152,16 +234,55 @@ class ClassRecordEditFragment : Fragment() {
         takePictureLauncher.launch(uri)
     }
 
+    private fun launchGallery() {
+        pickImageLauncher.launch("image/*")
+    }
+
+    private fun importImageFromUri(uri: Uri) {
+        val photoDir = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ClassNote")
+        photoDir.mkdirs()
+        val destFile = File(photoDir, "import_${System.currentTimeMillis()}.jpg")
+        try {
+            requireContext().contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(destFile).use { output -> input.copyTo(output) }
+            }
+            newPhotoPaths.add(destFile.absolutePath)
+            addPhotoThumbnail(destFile.absolutePath)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "匯入失敗：${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun addPhotoThumbnail(path: String) {
         val sizePx = (80 * resources.displayMetrics.density).toInt()
         val iv = ImageView(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(sizePx, sizePx).apply { marginEnd = (8 * resources.displayMetrics.density).toInt() }
+            layoutParams = LinearLayout.LayoutParams(sizePx, sizePx).apply {
+                marginEnd = (8 * resources.displayMetrics.density).toInt()
+            }
             scaleType = ImageView.ScaleType.CENTER_CROP
         }
-        val bitmap = BitmapFactory.decodeFile(path)
-        if (bitmap != null) iv.setImageBitmap(bitmap)
+        BitmapFactory.decodeFile(path)?.let { iv.setImageBitmap(it) }
         binding.layoutPhotos.addView(iv)
         binding.scrollPhotos.visibility = View.VISIBLE
+    }
+
+    private fun addDrawingThumbnail(path: String) {
+        val sizePx = (80 * resources.displayMetrics.density).toInt()
+        val iv = ImageView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(sizePx, sizePx).apply {
+                marginEnd = (8 * resources.displayMetrics.density).toInt()
+            }
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            setOnClickListener { openDrawingFragmentEdit(path) }
+        }
+        BitmapFactory.decodeFile(path)?.let { iv.setImageBitmap(it) }
+        binding.layoutDrawings.addView(iv)
+        binding.scrollDrawings.visibility = View.VISIBLE
+    }
+
+    private fun openDrawingFragmentEdit(existingPath: String) {
+        val action = ClassRecordEditFragmentDirections.actionClassRecordEditToDrawing(existingPath)
+        findNavController().navigate(action)
     }
 
     private fun toggleRecording() {
@@ -195,18 +316,14 @@ class ClassRecordEditFragment : Fragment() {
         }
         isRecording = true
         recordingStartMs = System.currentTimeMillis()
-        binding.btnRecord.text = getString(R.string.class_record_stop_audio)
     }
 
     private fun stopRecording() {
         val durationMs = System.currentTimeMillis() - recordingStartMs
-        try {
-            mediaRecorder?.stop()
-        } catch (_: Exception) {}
+        try { mediaRecorder?.stop() } catch (_: Exception) {}
         mediaRecorder?.release()
         mediaRecorder = null
         isRecording = false
-        binding.btnRecord.text = getString(R.string.class_record_record_audio)
         currentAudioFile?.let { file ->
             newAudioItems.add(Pair(file.absolutePath, durationMs))
             addAudioRow(file.absolutePath, durationMs)
@@ -236,22 +353,17 @@ class ClassRecordEditFragment : Fragment() {
     private fun runAiSummary() {
         val audioPath = existingMediaItems.firstOrNull { it.type == "audio" }?.filePath
             ?: newAudioItems.firstOrNull()?.first ?: return
-
         val apiKey = (requireActivity().application as ClassNoteApplication).appPreferences.geminiApiKey
         if (apiKey.isBlank()) {
             Toast.makeText(requireContext(), "請先在設定中輸入 Gemini API Key", Toast.LENGTH_SHORT).show()
             return
         }
-
-        val file = File(audioPath)
-        if (file.length() > 15 * 1024 * 1024L) {
+        if (File(audioPath).length() > 15 * 1024 * 1024L) {
             Toast.makeText(requireContext(), "錄音檔案過大（> 15 MB），請分段錄音", Toast.LENGTH_LONG).show()
             return
         }
-
         binding.btnAiSummary.isEnabled = false
         binding.btnAiSummary.text = getString(R.string.class_record_summarizing)
-
         viewLifecycleOwner.lifecycleScope.launch {
             val summary = GeminiApi.summarizeAudio(apiKey, audioPath)
             if (summary != null) {
@@ -270,15 +382,13 @@ class ClassRecordEditFragment : Fragment() {
             id = if (currentRecordId > 0) currentRecordId else 0,
             date = selectedDate,
             timeLabel = binding.etTimeLabel.text.toString().trim(),
-            textNote = binding.etTextNote.text.toString().trim(),
+            textNote = noteEditorBridge.content,
             aiSummary = binding.tvAiSummary.text.toString().trim()
         )
-
-        val newMediaItems = newPhotoPaths.map {
-            ClassRecordMediaEntity(recordId = 0, type = "photo", filePath = it)
-        } + newAudioItems.map { (path, duration) ->
-            ClassRecordMediaEntity(recordId = 0, type = "audio", filePath = path, durationMs = duration)
-        }
+        val newMediaItems =
+            newPhotoPaths.map { ClassRecordMediaEntity(recordId = 0, type = "photo", filePath = it) } +
+            newAudioItems.map { (path, dur) -> ClassRecordMediaEntity(recordId = 0, type = "audio", filePath = path, durationMs = dur) } +
+            newDrawingPaths.map { ClassRecordMediaEntity(recordId = 0, type = "drawing", filePath = it) }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.save(record, newMediaItems)
@@ -289,6 +399,7 @@ class ClassRecordEditFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         if (isRecording) stopRecording()
+        binding.webViewNote.destroy()
         _binding = null
     }
 }
