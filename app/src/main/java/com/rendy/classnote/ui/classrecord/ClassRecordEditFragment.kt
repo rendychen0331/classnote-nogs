@@ -32,7 +32,6 @@ import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.R
 import com.rendy.classnote.data.local.entity.ClassRecordEntity
 import com.rendy.classnote.data.local.entity.ClassRecordMediaEntity
-import com.rendy.classnote.data.remote.GeminiApi
 import com.rendy.classnote.databinding.FragmentClassRecordEditBinding
 import kotlinx.coroutines.launch
 import java.io.File
@@ -121,7 +120,6 @@ class ClassRecordEditFragment : Fragment() {
         binding.tvRecordDate.text = selectedDate
         binding.tvRecordDate.setOnClickListener { pickDate() }
         binding.tilTimeLabel.setEndIconOnClickListener { pickTime() }
-        binding.btnAiSummary.setOnClickListener { runAiSummary() }
         binding.btnSaveRecord.setOnClickListener { saveRecord() }
 
         setupNoteEditor()
@@ -199,16 +197,11 @@ class ClassRecordEditFragment : Fragment() {
                 pendingNoteHtml = record.textNote
             }
 
-            if (record.aiSummary.isNotBlank()) {
-                binding.tvAiSummary.text = record.aiSummary
-                binding.cardAiSummary.visibility = View.VISIBLE
-            }
             val mediaItems = app.classRecordRepository.getMediaForRecordOnce(id)
             existingMediaItems.addAll(mediaItems)
             mediaItems.filter { it.type == "photo" }.forEach { addPhotoThumbnail(it.filePath) }
             mediaItems.filter { it.type == "audio" }.forEach { addAudioRow(it.filePath, it.durationMs) }
             mediaItems.filter { it.type == "drawing" }.forEach { addDrawingThumbnail(it.filePath) }
-            updateAiButton()
         }
     }
 
@@ -341,7 +334,6 @@ class ClassRecordEditFragment : Fragment() {
         currentAudioFile?.let { file ->
             newAudioItems.add(Pair(file.absolutePath, durationMs))
             addAudioRow(file.absolutePath, durationMs)
-            updateAiButton()
         }
         currentAudioFile = null
     }
@@ -359,45 +351,13 @@ class ClassRecordEditFragment : Fragment() {
         binding.layoutRecordings.addView(tv)
     }
 
-    private fun updateAiButton() {
-        val hasAudio = existingMediaItems.any { it.type == "audio" } || newAudioItems.isNotEmpty()
-        binding.btnAiSummary.visibility = if (hasAudio) View.VISIBLE else View.GONE
-    }
-
-    private fun runAiSummary() {
-        val audioPath = existingMediaItems.firstOrNull { it.type == "audio" }?.filePath
-            ?: newAudioItems.firstOrNull()?.first ?: return
-        val apiKey = (requireActivity().application as ClassNoteApplication).appPreferences.geminiApiKey
-        if (apiKey.isBlank()) {
-            Toast.makeText(requireContext(), "請先在設定中輸入 Gemini API Key", Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (File(audioPath).length() > 15 * 1024 * 1024L) {
-            Toast.makeText(requireContext(), "錄音檔案過大（> 15 MB），請分段錄音", Toast.LENGTH_LONG).show()
-            return
-        }
-        binding.btnAiSummary.isEnabled = false
-        binding.btnAiSummary.text = getString(R.string.class_record_summarizing)
-        viewLifecycleOwner.lifecycleScope.launch {
-            val summary = GeminiApi.summarizeAudio(apiKey, audioPath)
-            if (summary != null) {
-                binding.tvAiSummary.text = summary
-                binding.cardAiSummary.visibility = View.VISIBLE
-            } else {
-                Toast.makeText(requireContext(), "AI 總結失敗，請稍後再試", Toast.LENGTH_SHORT).show()
-            }
-            binding.btnAiSummary.isEnabled = true
-            binding.btnAiSummary.text = getString(R.string.class_record_ai_summary)
-        }
-    }
-
     private fun saveRecord() {
         val record = ClassRecordEntity(
             id = if (currentRecordId > 0) currentRecordId else 0,
             date = selectedDate,
             timeLabel = binding.etTimeLabel.text.toString().trim(),
             textNote = noteEditorBridge.content,
-            aiSummary = binding.tvAiSummary.text.toString().trim()
+            aiSummary = ""
         )
         val newMediaItems =
             newPhotoPaths.map { ClassRecordMediaEntity(recordId = 0, type = "photo", filePath = it) } +

@@ -23,6 +23,16 @@
         android:textColor="?attr/colorOnSurfaceVariant"
         android:visibility="gone" />
 
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabAiSummary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="84dp"
+        android:text="AI 總結"
+        app:icon="@android:drawable/ic_menu_info_details" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddRecord"
         android:layout_width="wrap_content"

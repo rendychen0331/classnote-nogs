@@ -33,6 +33,8 @@ class ClassRecordViewModel(
         return savedId
     }
 
+    suspend fun getMediaOnce(recordId: Long) = repository.getMediaForRecordOnce(recordId)
+
     fun deleteRecord(id: Long) {
         viewModelScope.launch {
             repository.deleteAllMediaForRecord(id)

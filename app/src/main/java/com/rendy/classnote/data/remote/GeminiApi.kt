@@ -14,7 +14,9 @@ import java.net.URL
 object GeminiApi {
 
     private const val TAG = "GeminiApi"
-    private const val ENDPOINT =
+    private const val NOTIFICATION_ENDPOINT =
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
+    private const val SUMMARY_ENDPOINT =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
 
     private const val SYSTEM_INSTRUCTION = """你是一個提醒事項擷取助理，專門從手機通知中提取需要記錄的待辦事項或提醒。
@@ -51,7 +53,7 @@ object GeminiApi {
         if (apiKey.isBlank() || inputs.isEmpty()) return@withContext emptyList()
         try {
             val prompt = buildBatchPrompt(inputs)
-            val responseJson = callGemini(apiKey, prompt) ?: return@withContext List(inputs.size) { null }
+            val responseJson = callGemini(apiKey, prompt, NOTIFICATION_ENDPOINT) ?: return@withContext List(inputs.size) { null }
             parseBatchResponse(responseJson, inputs.size)
         } catch (e: Exception) {
             Log.e(TAG, "analyzeNotifications failed", e)
@@ -90,8 +92,8 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
         """.trimIndent()
     }
 
-    private fun callGemini(apiKey: String, prompt: String): String? {
-        val url = URL("$ENDPOINT?key=$apiKey")
+    private fun callGemini(apiKey: String, prompt: String, endpoint: String = SUMMARY_ENDPOINT): String? {
+        val url = URL("$endpoint?key=$apiKey")
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "POST"
         conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
@@ -140,7 +142,7 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
             val audioBytes = file.readBytes()
             val base64Audio = Base64.encodeToString(audioBytes, Base64.NO_WRAP)
 
-            val url = URL("$ENDPOINT?key=$apiKey")
+            val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
@@ -190,6 +192,58 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
                 .trim()
         } catch (e: Exception) {
             Log.e(TAG, "summarizeAudio failed", e)
+            null
+        }
+    }
+
+    /**
+     * 將多則筆記內容整理成一份課堂重點總結，回傳繁體中文條列摘要，失敗回傳 null。
+     */
+    suspend fun summarizeSession(apiKey: String, combinedContent: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            conn.doOutput = true
+            conn.connectTimeout = 30_000
+            conn.readTimeout = 60_000
+
+            val body = JSONObject().apply {
+                put("contents", JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("role", "user")
+                        put("parts", JSONArray().apply {
+                            put(JSONObject().apply {
+                                put("text", "以下是一堂課的所有筆記內容，請用繁體中文整理成課堂重點總結，以條列式呈現，每點不超過 60 字：\n\n$combinedContent")
+                            })
+                        })
+                    })
+                })
+                put("generationConfig", JSONObject().apply {
+                    put("temperature", 0.3)
+                    put("maxOutputTokens", 800)
+                })
+            }.toString()
+
+            OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
+
+            val code = conn.responseCode
+            if (code != 200) {
+                Log.e(TAG, "summarizeSession HTTP $code: ${conn.errorStream?.bufferedReader()?.readText()}")
+                return@withContext null
+            }
+
+            JSONObject(conn.inputStream.bufferedReader(Charsets.UTF_8).readText())
+                .getJSONArray("candidates")
+                .getJSONObject(0)
+                .getJSONObject("content")
+                .getJSONArray("parts")
+                .getJSONObject(0)
+                .getString("text")
+                .trim()
+        } catch (e: Exception) {
+            Log.e(TAG, "summarizeSession failed", e)
             null
         }
     }

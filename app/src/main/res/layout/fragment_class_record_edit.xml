@@ -217,48 +217,6 @@
             android:orientation="vertical"
             android:layout_marginBottom="8dp" />
 
-        <!-- AI 總結按鈕 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAiSummary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="@string/class_record_ai_summary"
-            android:visibility="gone" />
-
-        <!-- AI 總結卡片 -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardAiSummary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorPrimary"
-            app:cardBackgroundColor="?attr/colorSurfaceContainer">
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="12dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/class_record_ai_summary_label"
-                    android:textAppearance="?attr/textAppearanceLabelSmall"
-                    android:textColor="?attr/colorPrimary"
-                    android:layout_marginBottom="4dp" />
-                <TextView
-                    android:id="@+id/tvAiSummary"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorOnSurface" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
         <!-- 儲存 -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSaveRecord"
