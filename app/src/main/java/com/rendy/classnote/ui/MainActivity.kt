@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.rendy.classnote.R
@@ -37,11 +38,23 @@ class MainActivity : AppCompatActivity() {
         navController = navHostFragment.navController
 
         binding.bottomNavigation.setupWithNavController(navController)
+        // setupWithNavController 同步 NavController→BottomNav 選中狀態（保留）
+        // 覆寫 item 點擊：切換 tab 前若在設定頁，先 pop 掉，避免設定被存進 tab 的 back stack
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            if (navController.currentDestination?.id == R.id.settingsFragment) {
+                navController.popBackStack()
+            }
+            NavigationUI.onNavDestinationSelected(item, navController)
+        }
 
         binding.toolbar.inflateMenu(R.menu.toolbar_menu)
         binding.toolbar.setOnMenuItemClickListener { item ->
             if (item.itemId == R.id.action_settings) {
-                navController.navigate(R.id.settingsFragment)
+                if (navController.currentDestination?.id == R.id.settingsFragment) {
+                    navController.popBackStack()
+                } else {
+                    navController.navigate(R.id.settingsFragment)
+                }
                 true
             } else false
         }

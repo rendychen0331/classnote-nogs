@@ -1,7 +1,5 @@
 package com.rendy.classnote.ui.reminder
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -31,6 +29,7 @@ class ReminderViewModel(
         viewModelScope.launch {
             val reminderId = repository.insertReminder(reminder)
             scheduleNotifications(reminderId, notificationTimes)
+            notifyWidgets()
         }
 
     /** 新增提醒（suspend 版，確保存完才返回） */
@@ -48,6 +47,7 @@ class ReminderViewModel(
             repository.updateReminder(reminder)
             cancelPendingNotifications(reminder.id)
             scheduleNotifications(reminder.id, notificationTimes)
+            notifyWidgets()
         }
 
     /** 更新提醒（suspend 版，確保存完才返回） */
@@ -65,6 +65,7 @@ class ReminderViewModel(
         try {
             repository.markCompleted(reminderId)
             cancelPendingNotifications(reminderId)
+            notifyWidgets()
         } catch (e: Exception) {
             android.util.Log.e("ReminderViewModel", "completeReminder failed", e)
         }
@@ -75,16 +76,13 @@ class ReminderViewModel(
         try {
             cancelPendingNotifications(reminder.id)
             repository.deleteReminder(reminder)
+            notifyWidgets()
         } catch (e: Exception) {
             android.util.Log.e("ReminderViewModel", "deleteReminder failed", e)
         }
     }
 
-    private fun notifyWidgets() {
-        val manager = AppWidgetManager.getInstance(appContext)
-        val ids = manager.getAppWidgetIds(ComponentName(appContext, ClassNoteWidget::class.java))
-        for (id in ids) ClassNoteWidget.updateWidget(appContext, manager, id)
-    }
+    private fun notifyWidgets() = ClassNoteWidget.refreshAll(appContext)
 
     private suspend fun scheduleNotifications(reminderId: Long, triggerTimes: List<Long>) {
         val now = System.currentTimeMillis()

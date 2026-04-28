@@ -223,6 +223,74 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
     }
 
     /**
+     * 將照片 base64 inline 傳給 Gemini vision，回傳圖片內容描述/重點，失敗回傳 null。
+     */
+    suspend fun summarizePhoto(apiKey: String, photoPath: String): String? = withContext(Dispatchers.IO) {
+        var result: String? = null
+        val duration = measureTimeMillis {
+            try {
+                val file = File(photoPath)
+                val imageBytes = file.readBytes()
+                val base64Image = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+
+                val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                conn.doOutput = true
+                conn.connectTimeout = 30_000
+                conn.readTimeout = 60_000
+
+                val body = JSONObject().apply {
+                    put("contents", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("role", "user")
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("inlineData", JSONObject().apply {
+                                        put("mimeType", "image/jpeg")
+                                        put("data", base64Image)
+                                    })
+                                })
+                                put(JSONObject().apply {
+                                    put("text", "這是一張上課拍攝的照片，可能包含黑板、投影片或課堂內容。請用繁體中文描述照片中的重要資訊或文字，以條列式呈現，每點不超過 50 字。若照片模糊或無法識別內容，請直接說明。")
+                                })
+                            })
+                        })
+                    })
+                    put("generationConfig", JSONObject().apply {
+                        put("temperature", 0.3)
+                        put("maxOutputTokens", 800)
+                    })
+                }.toString()
+
+                OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
+
+                val code = conn.responseCode
+                if (code != 200) {
+                    val err = conn.errorStream?.bufferedReader()?.readText()
+                    Log.e(TAG, "summarizePhoto HTTP $code: $err")
+                    ApiLogger.log("gemini-flash(照片分析)", "[photo:${file.name}]", "HTTP $code: $err", 0, false)
+                    return@measureTimeMillis
+                }
+
+                result = JSONObject(conn.inputStream.bufferedReader(Charsets.UTF_8).readText())
+                    .getJSONArray("candidates")
+                    .getJSONObject(0)
+                    .getJSONObject("content")
+                    .getJSONArray("parts")
+                    .getJSONObject(0)
+                    .getString("text")
+                    .trim()
+            } catch (e: Exception) {
+                Log.e(TAG, "summarizePhoto failed", e)
+            }
+        }
+        ApiLogger.log("gemini-flash(照片分析)", "[photo]", result?.take(300), duration, result != null)
+        result
+    }
+
+    /**
      * 將多則筆記內容整理成一份課堂重點總結，回傳繁體中文條列摘要，失敗回傳 null。
      */
     suspend fun summarizeSession(apiKey: String, combinedContent: String): String? = withContext(Dispatchers.IO) {

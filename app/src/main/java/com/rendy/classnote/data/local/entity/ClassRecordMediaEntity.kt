@@ -10,5 +10,6 @@ data class ClassRecordMediaEntity(
     val type: String,           // "photo" | "audio"
     val filePath: String,
     val isUploaded: Boolean = false,
-    val durationMs: Long = 0
+    val durationMs: Long = 0,
+    val aiSummary: String = ""
 )

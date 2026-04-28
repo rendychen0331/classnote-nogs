@@ -73,12 +73,16 @@ class ReminderDetailFragment : Fragment() {
             val sourceIcon = when (reminder.syncSource) {
                 "gmail" -> R.drawable.ic_gmail
                 "classroom" -> R.drawable.ic_classroom_logo
-                "notify" -> R.drawable.ic_notification
+                "notify" -> R.drawable.ic_notify_source
                 else -> null
             }
             if (sourceIcon != null) {
                 binding.ivDetailSource.visibility = View.VISIBLE
                 binding.ivDetailSource.setImageResource(sourceIcon)
+            }
+            if (!reminder.sourceName.isNullOrBlank()) {
+                binding.tvDetailSourceName.visibility = View.VISIBLE
+                binding.tvDetailSourceName.text = reminder.sourceName
             }
 
             // ── 截止日期 ─────────────────────────────────────────────────────

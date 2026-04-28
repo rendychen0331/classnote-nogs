@@ -9,6 +9,9 @@ interface ClassRecordDao {
     @Query("SELECT * FROM class_records ORDER BY date DESC, createdAt DESC")
     fun getAllRecords(): Flow<List<ClassRecordEntity>>
 
+    @Query("SELECT * FROM class_records ORDER BY date DESC, createdAt DESC")
+    suspend fun getAllRecordsOnce(): List<ClassRecordEntity>
+
     @Query("SELECT * FROM class_records WHERE id = :id")
     suspend fun getById(id: Long): ClassRecordEntity?
 

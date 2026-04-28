@@ -31,4 +31,6 @@ class ClassRecordRepository(
     suspend fun deleteMedia(media: ClassRecordMediaEntity) = mediaDao.delete(media)
 
     suspend fun deleteAllMediaForRecord(recordId: Long) = mediaDao.deleteAllForRecord(recordId)
+
+    suspend fun updateMediaAiSummary(id: Long, summary: String) = mediaDao.updateAiSummary(id, summary)
 }

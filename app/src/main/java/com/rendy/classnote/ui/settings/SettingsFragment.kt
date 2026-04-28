@@ -482,6 +482,15 @@ class SettingsFragment : Fragment() {
                 .show()
         }
 
+        binding.btnSyncNotes.setOnClickListener {
+            if (!GoogleAuthManager.hasDriveFileScope(requireContext())) {
+                exportSignInLauncher.launch(GoogleAuthManager.getSignInIntentForExport(requireContext()))
+            } else {
+                val acc = GoogleAuthManager.getAccount(requireContext()) ?: return@setOnClickListener
+                doSyncNotes(acc)
+            }
+        }
+
         binding.btnGoogleExport.setOnClickListener {
             if (!GoogleAuthManager.hasDriveFileScope(requireContext())) {
                 exportSignInLauncher.launch(GoogleAuthManager.getSignInIntentForExport(requireContext()))
@@ -501,6 +510,23 @@ class SettingsFragment : Fragment() {
             when (result) {
                 is DriveBackupManager.Result.Success ->
                     Toast.makeText(requireContext(), getString(R.string.settings_google_export_success), Toast.LENGTH_LONG).show()
+                is DriveBackupManager.Result.AuthRequired ->
+                    reAuthLauncher.launch(result.intent)
+                is DriveBackupManager.Result.Error ->
+                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun doSyncNotes(account: com.google.android.gms.auth.api.signin.GoogleSignInAccount) {
+        binding.btnSyncNotes.isEnabled = false
+        Toast.makeText(requireContext(), "同步中...", Toast.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = DriveBackupManager.syncNotesToDrive(requireContext(), account)
+            binding.btnSyncNotes.isEnabled = true
+            when (result) {
+                is DriveBackupManager.Result.Success ->
+                    Toast.makeText(requireContext(), "同步完成", Toast.LENGTH_LONG).show()
                 is DriveBackupManager.Result.AuthRequired ->
                     reAuthLauncher.launch(result.intent)
                 is DriveBackupManager.Result.Error ->
@@ -1035,6 +1061,27 @@ class SettingsFragment : Fragment() {
             )
         }
         updateChannelFilterSummary()
+
+        // 無時間事件的預設提醒時間
+        updateDefaultRemindTimeSummary()
+        binding.tvDefaultRemindTime.setOnClickListener {
+            TimePickerDialog(
+                requireContext(),
+                { _, hour, minute ->
+                    prefs.defaultRemindHour = hour
+                    prefs.defaultRemindMinute = minute
+                    updateDefaultRemindTimeSummary()
+                },
+                prefs.defaultRemindHour,
+                prefs.defaultRemindMinute,
+                true
+            ).show()
+        }
+    }
+
+    private fun updateDefaultRemindTimeSummary() {
+        binding.tvDefaultRemindTime.text =
+            "%02d:%02d".format(prefs.defaultRemindHour, prefs.defaultRemindMinute)
     }
 
     private fun updateMonitoredAppsSummary() {

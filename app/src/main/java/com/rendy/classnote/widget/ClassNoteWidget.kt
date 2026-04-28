@@ -35,6 +35,12 @@ class ClassNoteWidget : AppWidgetProvider() {
         const val PREF_TAB = "widget_tab_"
         const val PREF_MONTH = "widget_month_"
 
+        fun refreshAll(context: Context) {
+            val manager = AppWidgetManager.getInstance(context)
+            val ids = manager.getAppWidgetIds(ComponentName(context, ClassNoteWidget::class.java))
+            for (id in ids) updateWidget(context, manager, id)
+        }
+
         fun updateWidget(context: Context, manager: AppWidgetManager, widgetId: Int) {
             try {
                 updateWidgetInternal(context, manager, widgetId)

@@ -20,4 +20,7 @@ interface ClassRecordMediaDao {
 
     @Query("DELETE FROM class_record_media WHERE recordId = :recordId")
     suspend fun deleteAllForRecord(recordId: Long)
+
+    @Query("UPDATE class_record_media SET aiSummary = :summary WHERE id = :id")
+    suspend fun updateAiSummary(id: Long, summary: String)
 }

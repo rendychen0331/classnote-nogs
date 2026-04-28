@@ -93,8 +93,20 @@ class ClassRecordListFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.records.collect { records ->
-                adapter.submitList(records)
+                val items = buildListItems(records)
+                adapter.submitList(items)
                 binding.tvNoRecords.visibility = if (records.isEmpty()) View.VISIBLE else View.GONE
+            }
+        }
+    }
+
+    private fun buildListItems(records: List<ClassRecordEntity>): List<ClassRecordListItem> {
+        val grouped = records.groupBy { "${it.date}||${it.timeLabel}" }
+        return buildList {
+            for ((key, group) in grouped) {
+                val (date, timeLabel) = key.split("||", limit = 2)
+                add(ClassRecordListItem.Header(date, timeLabel, group.size))
+                group.forEach { add(ClassRecordListItem.Record(it)) }
             }
         }
     }
@@ -105,17 +117,50 @@ class ClassRecordListFragment : Fragment() {
             Toast.makeText(requireContext(), "目前沒有上課紀錄", Toast.LENGTH_SHORT).show()
             return
         }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("AI 總結")
+            .setItems(arrayOf("📅  當天總結", "📚  單一節次總結")) { _, idx ->
+                when (idx) {
+                    0 -> showDaySummaryPicker(records)
+                    1 -> showSingleSessionPicker(records)
+                }
+            }
+            .show()
+    }
+
+    private fun showDaySummaryPicker(records: List<ClassRecordEntity>) {
+        val days = records.groupBy { it.date }.keys.toList().sorted().reversed()
+        if (days.size == 1) {
+            val dayRecords = records.filter { it.date == days[0] }
+            runAiSessionSummary(days[0], dayRecords)
+            return
+        }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("選擇日期")
+            .setItems(days.toTypedArray()) { _, idx ->
+                val date = days[idx]
+                val dayRecords = records.filter { it.date == date }
+                runAiSessionSummary(date, dayRecords)
+            }
+            .show()
+    }
+
+    private fun showSingleSessionPicker(records: List<ClassRecordEntity>) {
         val sessions = records
-            .groupBy { "${it.date}  ${it.timeLabel}".trim() }
+            .groupBy { "${it.date}||${it.timeLabel}" }
             .keys.toList()
-        val sessionLabels = sessions.toTypedArray()
+        val sessionLabels = sessions.map { key ->
+            val (date, timeLabel) = key.split("||", limit = 2)
+            if (timeLabel.isBlank()) date else "$date  $timeLabel"
+        }.toTypedArray()
 
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("選擇要總結的課堂")
+            .setTitle("選擇節次")
             .setItems(sessionLabels) { _, idx ->
                 val key = sessions[idx]
-                val group = records.filter { "${it.date}  ${it.timeLabel}".trim() == key }
-                runAiSessionSummary(key, group)
+                val (date, timeLabel) = key.split("||", limit = 2)
+                val group = records.filter { it.date == date && it.timeLabel == timeLabel }
+                runAiSessionSummary(sessionLabels[idx], group)
             }
             .show()
     }
@@ -148,6 +193,19 @@ class ClassRecordListFragment : Fragment() {
                         val audioSummary = GeminiApi.summarizeAudio(apiKey, audio.filePath)
                         if (!audioSummary.isNullOrBlank()) {
                             contentParts.add("【錄音摘要】\n$audioSummary")
+                        }
+                    }
+                }
+                val photoMedia = mediaList.filter { it.type == "photo" || it.type == "drawing" }
+                for (photo in photoMedia) {
+                    val label = if (photo.type == "drawing") "手繪內容" else "照片內容"
+                    if (photo.aiSummary.isNotBlank()) {
+                        contentParts.add("【$label】\n${photo.aiSummary}")
+                    } else {
+                        val photoSummary = GeminiApi.summarizePhoto(apiKey, photo.filePath)
+                        if (!photoSummary.isNullOrBlank()) {
+                            viewModel.updateMediaAiSummary(photo.id, photoSummary)
+                            contentParts.add("【$label】\n$photoSummary")
                         }
                     }
                 }

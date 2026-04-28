@@ -123,6 +123,16 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_QUIET_HOURS_POLICY_BEFORE, false)
         set(value) = prefs.edit { putBoolean(KEY_QUIET_HOURS_POLICY_BEFORE, value) }
 
+    /** 無時間提醒的預設通知小時（24小時制）。預設 8。 */
+    var defaultRemindHour: Int
+        get() = prefs.getInt(KEY_DEFAULT_REMIND_HOUR, 8)
+        set(value) = prefs.edit { putInt(KEY_DEFAULT_REMIND_HOUR, value) }
+
+    /** 無時間提醒的預設通知分鐘。預設 0。 */
+    var defaultRemindMinute: Int
+        get() = prefs.getInt(KEY_DEFAULT_REMIND_MINUTE, 0)
+        set(value) = prefs.edit { putInt(KEY_DEFAULT_REMIND_MINUTE, value) }
+
     /** AI 通知解析開關：自動偵測通知並加入提醒。預設關閉。 */
     var notificationListenerAutoAdd: Boolean
         get() = prefs.getBoolean(KEY_NOTIF_LISTENER_AUTO_ADD, false)
@@ -207,6 +217,8 @@ class AppPreferences(context: Context) {
         private const val KEY_AUTO_GMAIL_SYNC_INTERVAL_HOURS = "auto_gmail_sync_interval_hours"
         private const val KEY_AUTO_CLASSROOM_SYNC_ENABLED = "auto_classroom_sync_enabled"
         private const val KEY_AUTO_CLASSROOM_SYNC_INTERVAL_HOURS = "auto_classroom_sync_interval_hours"
+        private const val KEY_DEFAULT_REMIND_HOUR = "default_remind_hour"
+        private const val KEY_DEFAULT_REMIND_MINUTE = "default_remind_minute"
 
         const val NETWORK_WIFI = "wifi"
         const val NETWORK_MOBILE = "mobile"

@@ -41,7 +41,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Calendar
+import java.util.Locale
 
 class ClassRecordEditFragment : Fragment() {
 
@@ -55,6 +57,14 @@ class ClassRecordEditFragment : Fragment() {
     }
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    private fun formatDateWithDow(dateStr: String): String {
+        val dow = runCatching {
+            val d = LocalDate.parse(dateStr, dateFormatter)
+            "（${d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.TRADITIONAL_CHINESE)}）"
+        }.getOrDefault("")
+        return "$dateStr$dow"
+    }
     private var selectedDate: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
     private var currentRecordId: Long = -1L
 
@@ -120,14 +130,13 @@ class ClassRecordEditFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.tvRecordDate.text = selectedDate
+        binding.tvRecordDate.text = formatDateWithDow(selectedDate)
         binding.tvRecordDate.setOnClickListener { pickDate() }
         binding.tilTimeLabel.setEndIconOnClickListener { pickTime() }
         binding.btnSaveRecord.setOnClickListener { saveRecord() }
 
         val isTextType = args.noteType == "text" || args.noteType.isBlank()
-        val isPhotoType = args.noteType == "photo" || args.noteType == "gallery"
-        if (isPhotoType) {
+        if (!isTextType) {
             binding.cardNoteEditor.visibility = View.GONE
         }
         if (isTextType) {
@@ -216,7 +225,7 @@ class ClassRecordEditFragment : Fragment() {
             val app = requireActivity().application as ClassNoteApplication
             val record = viewModel.getById(id) ?: return@launch
             selectedDate = record.date
-            binding.tvRecordDate.text = record.date
+            binding.tvRecordDate.text = formatDateWithDow(record.date)
             binding.etTimeLabel.setText(record.timeLabel)
             binding.etTitle.setText(record.title)
 
@@ -229,6 +238,11 @@ class ClassRecordEditFragment : Fragment() {
 
             val mediaItems = app.classRecordRepository.getMediaForRecordOnce(id)
             existingMediaItems.addAll(mediaItems)
+            val hasNonTextMedia = mediaItems.any { it.type in listOf("photo", "audio", "drawing") }
+            if (hasNonTextMedia) {
+                binding.cardNoteEditor.visibility = View.GONE
+                binding.btnGenerateTitle.visibility = View.GONE
+            }
             mediaItems.filter { it.type == "photo" }.forEach { addPhotoThumbnail(it.filePath) }
             mediaItems.filter { it.type == "audio" }.forEach { addAudioRow(it.filePath, it.durationMs) }
             mediaItems.filter { it.type == "drawing" }.forEach { addDrawingThumbnail(it.filePath) }
@@ -239,7 +253,7 @@ class ClassRecordEditFragment : Fragment() {
         val cal = Calendar.getInstance()
         DatePickerDialog(requireContext(), { _, year, month, day ->
             selectedDate = LocalDate.of(year, month + 1, day).format(dateFormatter)
-            binding.tvRecordDate.text = selectedDate
+            binding.tvRecordDate.text = formatDateWithDow(selectedDate)
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
     }
 

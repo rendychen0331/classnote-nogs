@@ -35,6 +35,8 @@ class ClassRecordViewModel(
 
     suspend fun getMediaOnce(recordId: Long) = repository.getMediaForRecordOnce(recordId)
 
+    suspend fun updateMediaAiSummary(id: Long, summary: String) = repository.updateMediaAiSummary(id, summary)
+
     fun deleteRecord(id: Long) {
         viewModelScope.launch {
             repository.deleteAllMediaForRecord(id)

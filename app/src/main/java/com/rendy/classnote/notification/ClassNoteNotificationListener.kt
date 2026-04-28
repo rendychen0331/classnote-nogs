@@ -160,6 +160,7 @@ class ClassNoteNotificationListener : NotificationListenerService() {
 
                 if (addedTitles.isNotEmpty()) {
                     NotificationHelper.showAiResult(applicationContext, addedTitles.size, addedTitles)
+                    com.rendy.classnote.widget.ClassNoteWidget.refreshAll(applicationContext)
                 } else {
                     NotificationHelper.showAiNoResult(applicationContext, recognizedTitles)
                 }
@@ -178,6 +179,7 @@ class ClassNoteNotificationListener : NotificationListenerService() {
     ) {
         val now = System.currentTimeMillis()
         val zone = ZoneId.systemDefault()
+        val prefs = AppPreferences(applicationContext)
         val triggerTimes: List<Long> = if (dueTime != null) {
             val (h, m) = dueTime.split(":").map { it.toInt() }
             val base = LocalDateTime.of(LocalDate.parse(dueDate), LocalTime.of(h, m))
@@ -187,10 +189,9 @@ class ClassNoteNotificationListener : NotificationListenerService() {
                 base.minusMinutes(1).atZone(zone).toInstant().toEpochMilli()
             )
         } else {
-            val base = LocalDate.parse(dueDate).minusDays(1).atTime(8, 0)
+            val base = LocalDate.parse(dueDate).atTime(prefs.defaultRemindHour, prefs.defaultRemindMinute)
             listOf(base.atZone(zone).toInstant().toEpochMilli())
         }
-        val prefs = AppPreferences(applicationContext)
         val pendingTimes = notificationDao.getAllPendingNotifications().map { it.triggerAt }.toMutableSet()
         triggerTimes.map { ReminderScheduler.clampToQuietHours(it, prefs, zone) }.filter { it > now }.forEach { millis ->
             var adjustedMillis = millis

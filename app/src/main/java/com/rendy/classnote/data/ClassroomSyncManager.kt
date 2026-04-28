@@ -136,6 +136,7 @@ object ClassroomSyncManager {
                 }
 
                 ApiLogger.log("Classroom(同步)", "sync", "匯入$imported 略過$skipped", 0, true)
+                if (imported > 0) com.rendy.classnote.widget.ClassNoteWidget.refreshAll(context)
                 SyncResult.Success(imported, skipped)
             } catch (e: Exception) {
                 Log.e(TAG, "Classroom sync failed", e)
@@ -155,8 +156,8 @@ object ClassroomSyncManager {
         val now = System.currentTimeMillis()
         val zone = ZoneId.systemDefault()
 
+        val prefs = AppPreferences(context)
         val triggerTimes: List<Long> = if (dueTime != null) {
-            // 有截止時間 → 前 1 天、前 1 小時、前 1 分鐘
             val timeParts = dueTime.split(":").map { it.toInt() }
             val base = LocalDateTime.of(
                 LocalDate.parse(dueDate),
@@ -168,12 +169,9 @@ object ClassroomSyncManager {
                 base.minusMinutes(1).atZone(zone).toInstant().toEpochMilli()
             )
         } else {
-            // 無截止時間 → 前 1 天早上 08:00 提醒
-            val base = LocalDate.parse(dueDate).minusDays(1).atTime(8, 0)
+            val base = LocalDate.parse(dueDate).atTime(prefs.defaultRemindHour, prefs.defaultRemindMinute)
             listOf(base.atZone(zone).toInstant().toEpochMilli())
         }
-
-        val prefs = AppPreferences(context)
         val pendingTimes = notificationDao.getAllPendingNotifications().map { it.triggerAt }.toMutableSet()
         triggerTimes.map { ReminderScheduler.clampToQuietHours(it, prefs, zone) }.filter { it > now }.forEach { millis ->
             var adjustedMillis = millis

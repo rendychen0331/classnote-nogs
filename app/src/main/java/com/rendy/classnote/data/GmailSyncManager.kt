@@ -139,6 +139,7 @@ object GmailSyncManager {
                 }
 
                 ApiLogger.log("Gmail(同步)", "sync", "匯入$imported 略過$skipped", 0, true)
+                if (imported > 0) com.rendy.classnote.widget.ClassNoteWidget.refreshAll(context)
                 SyncResult.Success(imported, skipped)
             } catch (e: Exception) {
                 Log.e(TAG, "Sync failed", e)
@@ -239,6 +240,7 @@ object GmailSyncManager {
         val now = System.currentTimeMillis()
         val zone = ZoneId.systemDefault()
 
+        val prefs = AppPreferences(context)
         val triggerTimes: List<Long> = if (dueTime != null) {
             val timeParts = dueTime.split(":").map { it.toInt() }
             val base = java.time.LocalDateTime.of(
@@ -251,11 +253,9 @@ object GmailSyncManager {
                 base.minusMinutes(1).atZone(zone).toInstant().toEpochMilli()
             )
         } else {
-            val base = LocalDate.parse(dueDate).minusDays(1).atTime(LocalTime.of(8, 0))
+            val base = LocalDate.parse(dueDate).atTime(prefs.defaultRemindHour, prefs.defaultRemindMinute)
             listOf(base.atZone(zone).toInstant().toEpochMilli())
         }
-
-        val prefs = AppPreferences(context)
         val pendingTimes = notificationDao.getAllPendingNotifications().map { it.triggerAt }.toMutableSet()
         triggerTimes.map { ReminderScheduler.clampToQuietHours(it, prefs, zone) }.filter { it > now }.forEach { millis ->
             var adjustedMillis = millis

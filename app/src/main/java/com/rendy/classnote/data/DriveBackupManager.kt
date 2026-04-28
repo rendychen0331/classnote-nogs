@@ -9,6 +9,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
+import com.google.api.client.http.ByteArrayContent
 import com.google.api.client.http.FileContent
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
@@ -21,6 +22,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Date
 import java.util.Locale
 
@@ -239,6 +243,124 @@ object DriveBackupManager {
                 Result.Error(e.message ?: "匯出失敗")
             }
         }
+
+    /**
+     * 將所有上課紀錄同步到 Drive 可見資料夾 ClassNote/{日期資料夾}/
+     * 已存在的檔案（依檔名判斷）不重傳，文字筆記存為 note.md。
+     */
+    suspend fun syncNotesToDrive(context: Context, account: GoogleSignInAccount): Result =
+        withContext(Dispatchers.IO) {
+            try {
+                val drive = buildDriveFileService(context, account)
+                val db = ClassNoteDatabase.getDatabase(context)
+                val records = db.classRecordDao().getAllRecordsOnce()
+
+                // 找或建立 ClassNote 根資料夾
+                val rootId = findOrCreateFolder(drive, "ClassNote", null)
+
+                val dateFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                var uploaded = 0
+
+                for (record in records) {
+                    // 資料夾名稱：2026-04-27（一） 第3節 數學
+                    val dow = runCatching {
+                        val d = LocalDate.parse(record.date, dateFmt)
+                        "（${d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.TRADITIONAL_CHINESE)}）"
+                    }.getOrDefault("")
+                    val timePart = if (record.timeLabel.isNotBlank()) " ${record.timeLabel}" else ""
+                    val titlePart = if (record.title.isNotBlank()) " ${record.title}" else ""
+                    val folderName = "${record.date}$dow$timePart$titlePart"
+
+                    val folderId = findOrCreateFolder(drive, folderName, rootId)
+
+                    // 查出此資料夾已有的檔名
+                    val existing = drive.files().list()
+                        .setQ("'$folderId' in parents and trashed=false")
+                        .setFields("files(name)")
+                        .execute().files?.map { it.name }?.toSet() ?: emptySet()
+
+                    // 上傳 note.md（文字內容）
+                    val hasText = record.textNote.isNotBlank() || record.aiSummary.isNotBlank()
+                    if (hasText && "note.md" !in existing) {
+                        val md = buildMarkdown(record)
+                        val content = ByteArrayContent("text/markdown", md.toByteArray(Charsets.UTF_8))
+                        val meta = File().apply { name = "note.md"; parents = listOf(folderId) }
+                        drive.files().create(meta, content).setFields("id").execute()
+                        uploaded++
+                    }
+
+                    // 上傳媒體檔案（依檔名去重）
+                    val mediaList = db.classRecordMediaDao().getMediaForRecordOnce(record.id)
+                    for (media in mediaList) {
+                        val mediaFile = java.io.File(media.filePath)
+                        if (!mediaFile.exists()) continue
+                        if (mediaFile.name in existing) continue
+                        val mime = when (media.type) {
+                            "audio" -> "audio/m4a"
+                            "photo", "drawing" -> "image/jpeg"
+                            else -> "application/octet-stream"
+                        }
+                        val meta = File().apply { name = mediaFile.name; parents = listOf(folderId) }
+                        drive.files().create(meta, FileContent(mime, mediaFile)).setFields("id").execute()
+                        uploaded++
+                    }
+                }
+
+                Log.d(TAG, "Sync notes: $uploaded files uploaded")
+                ApiLogger.log("GoogleDrive(同步筆記)", "sync", "上傳 $uploaded 個檔案", 0, true)
+                Result.Success
+            } catch (e: UserRecoverableAuthIOException) {
+                ApiLogger.log("GoogleDrive(同步筆記)", "sync", "需要重新授權", 0, false)
+                Result.AuthRequired(e.intent)
+            } catch (e: GoogleJsonResponseException) {
+                val reason = e.details?.errors?.firstOrNull()?.reason ?: "unknown"
+                ApiLogger.log("GoogleDrive(同步筆記)", "sync", "HTTP ${e.statusCode} $reason", 0, false)
+                Result.Error("同步失敗 (${e.statusCode} $reason)")
+            } catch (e: Exception) {
+                ApiLogger.log("GoogleDrive(同步筆記)", "sync", e.message ?: "未知錯誤", 0, false)
+                Result.Error(e.message ?: "同步失敗")
+            }
+        }
+
+    private fun findOrCreateFolder(drive: Drive, name: String, parentId: String?): String {
+        val q = buildString {
+            append("mimeType='application/vnd.google-apps.folder' and name='${name.replace("'", "\\'")}' and trashed=false")
+            if (parentId != null) append(" and '$parentId' in parents")
+        }
+        val list = drive.files().list().setQ(q).setFields("files(id)").execute().files
+        if (!list.isNullOrEmpty()) return list.first().id
+        val meta = File().apply {
+            this.name = name
+            mimeType = "application/vnd.google-apps.folder"
+            if (parentId != null) parents = listOf(parentId)
+        }
+        return drive.files().create(meta).setFields("id").execute().id
+    }
+
+    private fun buildMarkdown(record: com.rendy.classnote.data.local.entity.ClassRecordEntity): String {
+        val title = record.title.ifBlank { "${record.date} ${record.timeLabel}".trim() }
+        val body = record.textNote
+            .replace(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE), "\n")
+            .replace(Regex("<[^>]+>"), "")
+            .trim()
+        return buildString {
+            appendLine("# $title")
+            appendLine()
+            appendLine("**日期：** ${record.date}　**節次：** ${record.timeLabel.ifBlank { "—" }}")
+            appendLine()
+            if (body.isNotBlank()) {
+                appendLine(body)
+                appendLine()
+            }
+            if (record.aiSummary.isNotBlank()) {
+                appendLine("---")
+                appendLine()
+                appendLine("**AI 總結**")
+                appendLine()
+                appendLine(record.aiSummary)
+            }
+        }.trimEnd()
+    }
 
     /**
      * 取得最後備份時間（null 表示沒有備份）

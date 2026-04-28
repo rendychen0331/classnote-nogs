@@ -66,6 +66,15 @@
                 android:visibility="gone"
                 android:contentDescription="@null" />
 
+            <TextView
+                android:id="@+id/tvDetailSourceName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <!-- 分隔線 -->
