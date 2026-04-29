@@ -22,7 +22,7 @@ object GeminiApi {
     private const val TITLE_ENDPOINT =
         "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent"
 
-    private const val SYSTEM_INSTRUCTION = """你是一個提醒事項擷取助理，專門從手機通知中提取需要記錄的待辦事項或提醒。
+    internal const val SYSTEM_INSTRUCTION = """你是一個提醒事項擷取助理，專門從手機通知中提取需要記錄的待辦事項或提醒。
 
 嚴格規則：
 1. 只能使用通知文字中明確出現的資訊，絕對不能猜測、推測或補充通知裡沒有的內容。
@@ -73,7 +73,7 @@ object GeminiApi {
         }
     }
 
-    private fun buildBatchPrompt(inputs: List<NotificationInput>): String {
+    internal fun buildBatchPrompt(inputs: List<NotificationInput>): String {
         val now = java.time.LocalDateTime.now()
         val today = now.toLocalDate().toString()  // YYYY-MM-DD
         val currentTime = now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
@@ -484,18 +484,9 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
         result
     }
 
-    private fun parseBatchResponse(json: String, expectedCount: Int): List<EventInfo?> {
+    internal fun parseNotificationJsonText(text: String, expectedCount: Int): List<EventInfo?> {
         return try {
-            val text = JSONObject(json)
-                .getJSONArray("candidates")
-                .getJSONObject(0)
-                .getJSONObject("content")
-                .getJSONArray("parts")
-                .getJSONObject(0)
-                .getString("text")
-                .trim()
-
-            val arr = JSONArray(text)
+            val arr = JSONArray(text.trim())
             (0 until expectedCount).map { i ->
                 if (i >= arr.length()) return@map null
                 val obj = arr.getJSONObject(i)
@@ -514,6 +505,22 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
                     note = obj.optString("note", "").trim()
                 )
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "parseNotificationJsonText failed", e)
+            List(expectedCount) { null }
+        }
+    }
+
+    private fun parseBatchResponse(json: String, expectedCount: Int): List<EventInfo?> {
+        return try {
+            val text = JSONObject(json)
+                .getJSONArray("candidates")
+                .getJSONObject(0)
+                .getJSONObject("content")
+                .getJSONArray("parts")
+                .getJSONObject(0)
+                .getString("text")
+            parseNotificationJsonText(text, expectedCount)
         } catch (e: Exception) {
             Log.e(TAG, "parseBatchResponse failed: $json", e)
             List(expectedCount) { null }

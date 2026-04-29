@@ -12,7 +12,10 @@ import com.rendy.classnote.data.local.ClassNoteDatabase
 import com.rendy.classnote.data.local.dao.ReminderNotificationDao
 import com.rendy.classnote.data.local.entity.ReminderEntity
 import com.rendy.classnote.data.local.entity.ReminderNotificationEntity
+import com.rendy.classnote.data.remote.ClaudeApi
 import com.rendy.classnote.data.remote.GeminiApi
+import com.rendy.classnote.data.remote.MimoApi
+import com.rendy.classnote.data.remote.OpenAiApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,8 +38,14 @@ class ClassNoteNotificationListener : NotificationListenerService() {
         val prefs = AppPreferences(applicationContext)
         if (!prefs.notificationListenerAutoAdd) return
 
-        val apiKey = prefs.geminiApiKey
-        if (apiKey.isBlank()) return
+        // 確認至少有一個啟用的 model 有 key
+        val hasAnyKey = with(prefs) {
+            (geminiEnabled && geminiApiKey.isNotBlank()) ||
+            (mimoEnabled   && mimoApiKey.isNotBlank())   ||
+            (claudeEnabled && claudeApiKey.isNotBlank()) ||
+            (openaiEnabled && openaiApiKey.isNotBlank())
+        }
+        if (!hasAnyKey) return
 
         if (sbn.packageName == packageName) return
 
@@ -109,10 +118,24 @@ class ClassNoteNotificationListener : NotificationListenerService() {
         scope.launch {
             try {
                 val prefs = AppPreferences(applicationContext)
-                val apiKey = prefs.geminiApiKey
-                if (apiKey.isBlank()) { NotificationHelper.cancelAiStatus(applicationContext); return@launch }
-
-                val results = GeminiApi.analyzeNotifications(apiKey, batch)
+                val provider = prefs.preferredChatProvider
+                val results: List<GeminiApi.EventInfo?> = when {
+                    provider == "mimo"   && prefs.mimoEnabled   && prefs.mimoApiKey.isNotBlank()   ->
+                        MimoApi.analyzeNotifications(prefs.mimoApiKey, batch)
+                    provider == "claude" && prefs.claudeEnabled && prefs.claudeApiKey.isNotBlank() ->
+                        ClaudeApi.analyzeNotifications(prefs.claudeApiKey, batch)
+                    provider == "openai" && prefs.openaiEnabled && prefs.openaiApiKey.isNotBlank() ->
+                        OpenAiApi.analyzeNotifications(prefs.openaiApiKey, batch)
+                    prefs.geminiEnabled  && prefs.geminiApiKey.isNotBlank()                        ->
+                        GeminiApi.analyzeNotifications(prefs.geminiApiKey, batch)
+                    prefs.mimoEnabled    && prefs.mimoApiKey.isNotBlank()                          ->
+                        MimoApi.analyzeNotifications(prefs.mimoApiKey, batch)
+                    prefs.claudeEnabled  && prefs.claudeApiKey.isNotBlank()                        ->
+                        ClaudeApi.analyzeNotifications(prefs.claudeApiKey, batch)
+                    prefs.openaiEnabled  && prefs.openaiApiKey.isNotBlank()                        ->
+                        OpenAiApi.analyzeNotifications(prefs.openaiApiKey, batch)
+                    else -> { NotificationHelper.cancelAiStatus(applicationContext); return@launch }
+                }
                 val db = ClassNoteDatabase.getDatabase(applicationContext)
                 val dao = db.reminderDao()
                 val notifDao = db.reminderNotificationDao()
