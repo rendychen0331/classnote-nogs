@@ -260,7 +260,7 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
                     })
                     put("generationConfig", JSONObject().apply {
                         put("temperature", 0.3)
-                        put("maxOutputTokens", 800)
+                        put("maxOutputTokens", 2000)
                     })
                 }.toString()
 
@@ -318,7 +318,7 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
                     })
                     put("generationConfig", JSONObject().apply {
                         put("temperature", 0.3)
-                        put("maxOutputTokens", 800)
+                        put("maxOutputTokens", 2000)
                     })
                 }.toString()
 
