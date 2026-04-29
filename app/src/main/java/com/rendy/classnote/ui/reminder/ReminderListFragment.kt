@@ -8,7 +8,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.rendy.classnote.ui.SwipeActionsCallback
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.data.local.entity.ReminderEntity
 import com.rendy.classnote.data.model.ReminderCategory
@@ -49,7 +51,6 @@ class ReminderListFragment : Fragment() {
                         .actionReminderListFragmentToReminderEditFragment(reminder.id)
                 )
             },
-            onDelete = { reminder -> viewModel.deleteReminder(reminder) },
             onItemClick = { reminder ->
                 findNavController().navigate(
                     ReminderListFragmentDirections
@@ -62,6 +63,21 @@ class ReminderListFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@ReminderListFragment.adapter
         }
+
+        ItemTouchHelper(SwipeActionsCallback(
+            context = requireContext(),
+            onDelete = { position ->
+                val reminder = adapter.currentList.getOrNull(position) ?: return@SwipeActionsCallback
+                viewModel.deleteReminder(reminder)
+            },
+            onEdit = { position ->
+                val reminder = adapter.currentList.getOrNull(position) ?: return@SwipeActionsCallback
+                findNavController().navigate(
+                    ReminderListFragmentDirections
+                        .actionReminderListFragmentToReminderEditFragment(reminder.id)
+                )
+            }
+        )).attachToRecyclerView(binding.recyclerReminders)
 
         setupFilterChips()
 

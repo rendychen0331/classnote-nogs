@@ -156,15 +156,6 @@
             android:contentDescription="@string/edit"
             app:icon="@drawable/ic_reminder" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDelete"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginEnd="4dp"
-            android:contentDescription="@string/delete"
-            app:iconTint="?attr/colorError"
-            app:icon="@android:drawable/ic_menu_delete" />
 
     </LinearLayout>
 

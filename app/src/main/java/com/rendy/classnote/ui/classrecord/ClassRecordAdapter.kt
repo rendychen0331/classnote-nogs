@@ -20,8 +20,7 @@ sealed class ClassRecordListItem {
 }
 
 class ClassRecordAdapter(
-    private val onClick: (ClassRecordEntity) -> Unit,
-    private val onDelete: (ClassRecordEntity) -> Unit
+    private val onClick: (ClassRecordEntity) -> Unit
 ) : ListAdapter<ClassRecordListItem, RecyclerView.ViewHolder>(DiffCallback) {
 
     inner class HeaderViewHolder(private val binding: ItemClassRecordHeaderBinding) :
@@ -56,7 +55,6 @@ class ClassRecordAdapter(
             binding.tvRecordNote.visibility = if (preview.isNotEmpty()) View.VISIBLE else View.GONE
 
             binding.root.setOnClickListener { onClick(item) }
-            binding.btnDeleteRecord.setOnClickListener { onDelete(item) }
         }
     }
 
@@ -80,8 +78,8 @@ class ClassRecordAdapter(
     }
 
     companion object {
-        private const val VIEW_TYPE_HEADER = 0
-        private const val VIEW_TYPE_RECORD = 1
+        internal const val VIEW_TYPE_HEADER = 0
+        internal const val VIEW_TYPE_RECORD = 1
 
         val DiffCallback = object : DiffUtil.ItemCallback<ClassRecordListItem>() {
             override fun areItemsTheSame(old: ClassRecordListItem, new: ClassRecordListItem): Boolean =

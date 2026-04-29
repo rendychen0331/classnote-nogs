@@ -15,7 +15,6 @@ import com.rendy.classnote.databinding.ItemReminderBinding
 class ReminderAdapter(
     private val onComplete: (ReminderEntity) -> Unit,
     private val onEdit: (ReminderEntity) -> Unit,
-    private val onDelete: (ReminderEntity) -> Unit,
     private val onItemClick: (ReminderEntity) -> Unit
 ) : ListAdapter<ReminderEntity, ReminderAdapter.ViewHolder>(DiffCallback) {
 
@@ -78,7 +77,6 @@ class ReminderAdapter(
             binding.checkboxDone.isChecked = item.isCompleted
             binding.checkboxDone.setOnClickListener { onComplete(item) }
             binding.btnEdit.setOnClickListener { onEdit(item) }
-            binding.btnDelete.setOnClickListener { onDelete(item) }
             binding.root.setOnClickListener { onItemClick(item) }
         }
     }

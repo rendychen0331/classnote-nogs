@@ -26,6 +26,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -98,8 +99,8 @@ class ClassRecordEditFragment : Fragment() {
         }
     }
 
-    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { importImageFromUri(it) }
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        uris.forEach { importImageFromUri(it) }
     }
 
     private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -258,6 +259,27 @@ class ClassRecordEditFragment : Fragment() {
     }
 
     private fun pickTime() {
+        val today = java.time.LocalDate.now()
+        val dow = today.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.TRADITIONAL_CHINESE)
+        val periodList = ClassPeriodUtils.getAllPeriods()
+        val options = periodList.map { it.displayName }.toMutableList<String>()
+        options.add("⏰  自訂時間...")
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("選擇節次（$dow）")
+            .setItems(options.toTypedArray()) { _, idx ->
+                if (idx < periodList.size) {
+                    val label = periodList[idx].label
+                    binding.etTimeLabel.setText(label)
+                    binding.etTimeLabel.setSelection(label.length)
+                } else {
+                    showCustomTimePicker()
+                }
+            }
+            .show()
+    }
+
+    private fun showCustomTimePicker() {
         val cal = Calendar.getInstance()
         android.app.TimePickerDialog(requireContext(), { _, hour, minute ->
             val timeStr = "%02d:%02d".format(hour, minute)
@@ -313,8 +335,51 @@ class ClassRecordEditFragment : Fragment() {
             scaleType = ImageView.ScaleType.CENTER_CROP
         }
         BitmapFactory.decodeFile(path)?.let { iv.setImageBitmap(it) }
+        removeAddPhotoButton()
         binding.layoutPhotos.addView(iv)
+        binding.layoutPhotos.addView(makeAddPhotoButton())
         binding.scrollPhotos.visibility = View.VISIBLE
+    }
+
+    private fun removeAddPhotoButton() {
+        binding.layoutPhotos.findViewWithTag<android.widget.FrameLayout>("add_photo")
+            ?.let { binding.layoutPhotos.removeView(it) }
+    }
+
+    private fun makeAddPhotoButton(): android.widget.FrameLayout {
+        val sizePx = (80 * resources.displayMetrics.density).toInt()
+        val padPx = (16 * resources.displayMetrics.density).toInt()
+        return android.widget.FrameLayout(requireContext()).apply {
+            tag = "add_photo"
+            layoutParams = LinearLayout.LayoutParams(sizePx, sizePx).apply {
+                marginEnd = (8 * resources.displayMetrics.density).toInt()
+            }
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(requireContext().getColor(android.R.color.transparent))
+                setStroke(2, requireContext().getColor(android.R.color.darker_gray))
+                cornerRadius = (8 * resources.displayMetrics.density)
+            }
+            val tv = android.widget.TextView(requireContext()).apply {
+                text = "+"
+                textSize = 28f
+                gravity = android.view.Gravity.CENTER
+                setTextColor(requireContext().getColor(android.R.color.darker_gray))
+                layoutParams = android.widget.FrameLayout.LayoutParams(
+                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                    android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+                )
+            }
+            addView(tv)
+            setOnClickListener { showAddPhotoMenu() }
+        }
+    }
+
+    private fun showAddPhotoMenu() {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setItems(arrayOf("📷  相機", "🖼  相簿")) { _, idx ->
+                if (idx == 0) checkCameraAndLaunch() else launchGallery()
+            }
+            .show()
     }
 
     private fun addDrawingThumbnail(path: String) {

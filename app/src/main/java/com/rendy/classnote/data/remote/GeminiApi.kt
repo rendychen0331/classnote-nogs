@@ -407,6 +407,83 @@ category 值：HOMEWORK（作業）、EXAM（考試）、PAYMENT（繳費）、E
         result
     }
 
+    /**
+     * 以課堂筆記摘要為背景，進行多輪問答對話。
+     * history: 依時序排列的 (text, isUser) pair，不含最新 userMessage。
+     */
+    suspend fun chatWithContext(
+        apiKey: String,
+        noteContext: String,
+        history: List<Pair<String, Boolean>>,
+        userMessage: String
+    ): String? = withContext(Dispatchers.IO) {
+        var result: String? = null
+        val duration = measureTimeMillis {
+            try {
+                val url = URL("$SUMMARY_ENDPOINT?key=$apiKey")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                conn.doOutput = true
+                conn.connectTimeout = 30_000
+                conn.readTimeout = 60_000
+
+                val contentsArray = JSONArray()
+                history.forEach { (text, isUser) ->
+                    contentsArray.put(JSONObject().apply {
+                        put("role", if (isUser) "user" else "model")
+                        put("parts", JSONArray().apply {
+                            put(JSONObject().apply { put("text", text) })
+                        })
+                    })
+                }
+                contentsArray.put(JSONObject().apply {
+                    put("role", "user")
+                    put("parts", JSONArray().apply {
+                        put(JSONObject().apply { put("text", userMessage) })
+                    })
+                })
+
+                val body = JSONObject().apply {
+                    put("system_instruction", JSONObject().apply {
+                        put("parts", JSONArray().apply {
+                            put(JSONObject().apply {
+                                put("text", "你是一個課堂筆記助理，以繁體中文回答問題。以下是本堂課的課堂筆記總結，作為對話背景參考：\n\n$noteContext")
+                            })
+                        })
+                    })
+                    put("contents", contentsArray)
+                    put("generationConfig", JSONObject().apply {
+                        put("temperature", 0.5)
+                        put("maxOutputTokens", 1000)
+                    })
+                }.toString()
+
+                OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body) }
+
+                val code = conn.responseCode
+                if (code != 200) {
+                    val err = conn.errorStream?.bufferedReader()?.readText()
+                    Log.e(TAG, "chatWithContext HTTP $code: $err")
+                    return@measureTimeMillis
+                }
+
+                result = JSONObject(conn.inputStream.bufferedReader(Charsets.UTF_8).readText())
+                    .getJSONArray("candidates")
+                    .getJSONObject(0)
+                    .getJSONObject("content")
+                    .getJSONArray("parts")
+                    .getJSONObject(0)
+                    .getString("text")
+                    .trim()
+            } catch (e: Exception) {
+                Log.e(TAG, "chatWithContext failed", e)
+            }
+        }
+        ApiLogger.log("gemini-flash(筆記對話)", userMessage.take(100), result?.take(200), duration, result != null)
+        result
+    }
+
     private fun parseBatchResponse(json: String, expectedCount: Int): List<EventInfo?> {
         return try {
             val text = JSONObject(json)

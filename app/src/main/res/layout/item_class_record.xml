@@ -54,14 +54,6 @@
 
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDeleteRecord"
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginStart="4dp"
-            app:iconTint="?attr/colorError"
-            app:icon="@android:drawable/ic_menu_delete" />
 
     </LinearLayout>
 

@@ -116,6 +116,12 @@
         android:label="@string/nav_class_record"
         tools:layout="@layout/fragment_class_record_list">
         <action
+            android:id="@+id/actionClassRecordListFragmentToClassRecordDetailFragment"
+            app:destination="@id/classRecordDetailFragment" />
+        <action
+            android:id="@+id/actionClassRecordListFragmentToClassRecordSummaryFragment"
+            app:destination="@id/classRecordSummaryFragment" />
+        <action
             android:id="@+id/actionClassRecordListFragmentToClassRecordEditFragment"
             app:destination="@id/classRecordEditFragment" />
         <action
@@ -124,6 +130,32 @@
         <action
             android:id="@+id/actionClassRecordListToDrawing"
             app:destination="@id/drawingFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/classRecordDetailFragment"
+        android:name="com.rendy.classnote.ui.classrecord.ClassRecordDetailFragment"
+        android:label="@string/class_record_add"
+        tools:layout="@layout/fragment_class_record_detail">
+        <argument
+            android:name="recordId"
+            app:argType="long" />
+        <action
+            android:id="@+id/actionClassRecordDetailFragmentToClassRecordEditFragment"
+            app:destination="@id/classRecordEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/classRecordSummaryFragment"
+        android:name="com.rendy.classnote.ui.classrecord.ClassRecordSummaryFragment"
+        android:label="AI 總結"
+        tools:layout="@layout/fragment_class_record_summary">
+        <argument
+            android:name="sessionLabel"
+            app:argType="string" />
+        <argument
+            android:name="summary"
+            app:argType="string" />
     </fragment>
 
     <fragment

@@ -9,8 +9,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.rendy.classnote.ui.SwipeActionsCallback
 import com.rendy.classnote.ClassNoteApplication
 import com.rendy.classnote.data.AppPreferences
 import com.rendy.classnote.data.local.entity.ClassRecordEntity
@@ -42,21 +44,31 @@ class ClassRecordListFragment : Fragment() {
             onClick = { record ->
                 findNavController().navigate(
                     ClassRecordListFragmentDirections
-                        .actionClassRecordListFragmentToClassRecordEditFragment(record.id)
+                        .actionClassRecordListFragmentToClassRecordDetailFragment(record.id)
                 )
-            },
-            onDelete = { record ->
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("刪除紀錄")
-                    .setMessage("確定要刪除這筆上課紀錄？")
-                    .setPositiveButton("刪除") { _, _ -> viewModel.deleteRecord(record.id) }
-                    .setNegativeButton("取消", null)
-                    .show()
             }
         )
 
         binding.rvClassRecords.layoutManager = LinearLayoutManager(requireContext())
         binding.rvClassRecords.adapter = adapter
+
+        ItemTouchHelper(SwipeActionsCallback(
+            context = requireContext(),
+            onDelete = { position ->
+                val item = adapter.currentList.getOrNull(position) as? ClassRecordListItem.Record
+                    ?: return@SwipeActionsCallback
+                viewModel.deleteRecord(item.entity.id)
+            },
+            onEdit = { position ->
+                val item = adapter.currentList.getOrNull(position) as? ClassRecordListItem.Record
+                    ?: return@SwipeActionsCallback
+                findNavController().navigate(
+                    ClassRecordListFragmentDirections
+                        .actionClassRecordListFragmentToClassRecordEditFragment(item.entity.id)
+                )
+            },
+            isSwipeable = { viewType -> viewType == ClassRecordAdapter.VIEW_TYPE_RECORD }
+        )).attachToRecyclerView(binding.rvClassRecords)
 
         binding.fabAddRecord.setOnClickListener {
             val options = arrayOf("📝  文字筆記", "✏️  手寫筆記", "📷  拍照筆記", "🖼  相簿匯入", "🎙  錄音筆記")
@@ -230,11 +242,10 @@ class ClassRecordListFragment : Fragment() {
                 return@launch
             }
 
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle(sessionLabel)
-                .setMessage(summary)
-                .setPositiveButton("關閉", null)
-                .show()
+            findNavController().navigate(
+                ClassRecordListFragmentDirections
+                    .actionClassRecordListFragmentToClassRecordSummaryFragment(sessionLabel, summary)
+            )
         }
     }
 

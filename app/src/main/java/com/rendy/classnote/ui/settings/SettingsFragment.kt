@@ -2,6 +2,7 @@ package com.rendy.classnote.ui.settings
 
 import android.app.Activity
 import android.content.Intent
+import com.rendy.classnote.BuildConfig
 import android.widget.BaseAdapter
 import android.widget.CheckedTextView
 import android.widget.ListView
@@ -1033,13 +1034,158 @@ class SettingsFragment : Fragment() {
             )
         }
 
-        // CWA API Key
+        // CWA API Key（預設遮蔽，需生物辨識才能顯示）
         val savedCwaKey = prefs.cwaApiKey
         if (savedCwaKey.isNotBlank()) binding.etCwaApiKey.setText(savedCwaKey)
+        var cwaKeyVisible = false
+        binding.tilCwaApiKey.setEndIconOnClickListener {
+            if (cwaKeyVisible) {
+                cwaKeyVisible = false
+                binding.etCwaApiKey.inputType =
+                    android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                binding.tilCwaApiKey.setEndIconDrawable(R.drawable.ic_visibility_off)
+                binding.etCwaApiKey.setSelection(binding.etCwaApiKey.text?.length ?: 0)
+            } else {
+                BiometricHelper.authenticate(
+                    fragment = this,
+                    title = getString(R.string.biometric_title_monitor),
+                    subtitle = getString(R.string.biometric_subtitle_apikey),
+                    onSuccess = {
+                        cwaKeyVisible = true
+                        binding.etCwaApiKey.inputType =
+                            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                        binding.tilCwaApiKey.setEndIconDrawable(R.drawable.ic_visibility)
+                        binding.etCwaApiKey.setSelection(binding.etCwaApiKey.text?.length ?: 0)
+                    }
+                )
+            }
+        }
         binding.btnSaveCwaApiKey.setOnClickListener {
-            val key = binding.etCwaApiKey.text?.toString()?.trim() ?: ""
-            prefs.cwaApiKey = key
-            Toast.makeText(requireContext(), getString(R.string.settings_weather_cwa_key_saved), Toast.LENGTH_SHORT).show()
+            BiometricHelper.authenticate(
+                fragment = this,
+                title = getString(R.string.biometric_title_monitor),
+                subtitle = getString(R.string.biometric_subtitle_apikey),
+                onSuccess = {
+                    val key = binding.etCwaApiKey.text?.toString()?.trim() ?: ""
+                    prefs.cwaApiKey = key
+                    Toast.makeText(requireContext(), getString(R.string.settings_weather_cwa_key_saved), Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        // MiMo API Key（預設遮蔽，需生物辨識才能顯示）
+        val savedMimoKey = prefs.mimoApiKey
+        if (savedMimoKey.isNotBlank()) binding.etMimoApiKey.setText(savedMimoKey)
+        var mimoKeyVisible = false
+        binding.tilMimoApiKey.setEndIconOnClickListener {
+            if (mimoKeyVisible) {
+                mimoKeyVisible = false
+                binding.etMimoApiKey.inputType =
+                    android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                binding.tilMimoApiKey.setEndIconDrawable(R.drawable.ic_visibility_off)
+                binding.etMimoApiKey.setSelection(binding.etMimoApiKey.text?.length ?: 0)
+            } else {
+                BiometricHelper.authenticate(
+                    fragment = this,
+                    title = getString(R.string.biometric_title_monitor),
+                    subtitle = getString(R.string.biometric_subtitle_apikey),
+                    onSuccess = {
+                        mimoKeyVisible = true
+                        binding.etMimoApiKey.inputType =
+                            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                        binding.tilMimoApiKey.setEndIconDrawable(R.drawable.ic_visibility)
+                        binding.etMimoApiKey.setSelection(binding.etMimoApiKey.text?.length ?: 0)
+                    }
+                )
+            }
+        }
+        binding.btnSaveMimoKey.setOnClickListener {
+            BiometricHelper.authenticate(
+                fragment = this,
+                title = getString(R.string.biometric_title_monitor),
+                subtitle = getString(R.string.biometric_subtitle_apikey),
+                onSuccess = {
+                    val key = binding.etMimoApiKey.text?.toString()?.trim() ?: ""
+                    prefs.mimoApiKey = key
+                    Toast.makeText(requireContext(), "MiMo API Key 已儲存", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        // Claude API Key
+        val savedClaudeKey = prefs.claudeApiKey
+        if (savedClaudeKey.isNotBlank()) binding.etClaudeApiKey.setText(savedClaudeKey)
+        var claudeKeyVisible = false
+        binding.tilClaudeApiKey.setEndIconOnClickListener {
+            if (claudeKeyVisible) {
+                claudeKeyVisible = false
+                binding.etClaudeApiKey.inputType =
+                    android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                binding.tilClaudeApiKey.setEndIconDrawable(R.drawable.ic_visibility_off)
+                binding.etClaudeApiKey.setSelection(binding.etClaudeApiKey.text?.length ?: 0)
+            } else {
+                BiometricHelper.authenticate(
+                    fragment = this,
+                    title = getString(R.string.biometric_title_monitor),
+                    subtitle = getString(R.string.biometric_subtitle_apikey),
+                    onSuccess = {
+                        claudeKeyVisible = true
+                        binding.etClaudeApiKey.inputType =
+                            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                        binding.tilClaudeApiKey.setEndIconDrawable(R.drawable.ic_visibility)
+                        binding.etClaudeApiKey.setSelection(binding.etClaudeApiKey.text?.length ?: 0)
+                    }
+                )
+            }
+        }
+        binding.btnSaveClaudeKey.setOnClickListener {
+            BiometricHelper.authenticate(
+                fragment = this,
+                title = getString(R.string.biometric_title_monitor),
+                subtitle = getString(R.string.biometric_subtitle_apikey),
+                onSuccess = {
+                    prefs.claudeApiKey = binding.etClaudeApiKey.text?.toString()?.trim() ?: ""
+                    Toast.makeText(requireContext(), "Claude API Key 已儲存", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        // OpenAI API Key
+        val savedOpenaiKey = prefs.openaiApiKey
+        if (savedOpenaiKey.isNotBlank()) binding.etOpenaiApiKey.setText(savedOpenaiKey)
+        var openaiKeyVisible = false
+        binding.tilOpenaiApiKey.setEndIconOnClickListener {
+            if (openaiKeyVisible) {
+                openaiKeyVisible = false
+                binding.etOpenaiApiKey.inputType =
+                    android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                binding.tilOpenaiApiKey.setEndIconDrawable(R.drawable.ic_visibility_off)
+                binding.etOpenaiApiKey.setSelection(binding.etOpenaiApiKey.text?.length ?: 0)
+            } else {
+                BiometricHelper.authenticate(
+                    fragment = this,
+                    title = getString(R.string.biometric_title_monitor),
+                    subtitle = getString(R.string.biometric_subtitle_apikey),
+                    onSuccess = {
+                        openaiKeyVisible = true
+                        binding.etOpenaiApiKey.inputType =
+                            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                        binding.tilOpenaiApiKey.setEndIconDrawable(R.drawable.ic_visibility)
+                        binding.etOpenaiApiKey.setSelection(binding.etOpenaiApiKey.text?.length ?: 0)
+                    }
+                )
+            }
+        }
+        binding.btnSaveOpenaiKey.setOnClickListener {
+            BiometricHelper.authenticate(
+                fragment = this,
+                title = getString(R.string.biometric_title_monitor),
+                subtitle = getString(R.string.biometric_subtitle_apikey),
+                onSuccess = {
+                    prefs.openaiApiKey = binding.etOpenaiApiKey.text?.toString()?.trim() ?: ""
+                    Toast.makeText(requireContext(), "OpenAI API Key 已儲存", Toast.LENGTH_SHORT).show()
+                }
+            )
         }
 
         binding.btnPickMonitoredApps.setOnClickListener {
@@ -1257,6 +1403,23 @@ class SettingsFragment : Fragment() {
 
     private fun setupApiLogSection() {
         binding.btnViewApiLogs.setOnClickListener { showApiLogs() }
+
+        // About
+        val versionName = BuildConfig.VERSION_NAME
+        val dashIdx = versionName.indexOf('-')
+        if (dashIdx >= 0) {
+            binding.tvAboutVersion.text = versionName.substring(0, dashIdx)
+            val raw = versionName.substring(dashIdx + 1)   // "yyyyMMdd-HHmm"
+            binding.tvAboutBuildTime.text = runCatching {
+                val parts = raw.split("-")
+                val d = parts[0]   // yyyyMMdd
+                val t = parts[1]   // HHmm
+                "${d.substring(0,4)}/${d.substring(4,6)}/${d.substring(6,8)}  ${t.substring(0,2)}:${t.substring(2,4)}"
+            }.getOrDefault(raw)
+        } else {
+            binding.tvAboutVersion.text = versionName
+            binding.tvAboutBuildTime.text = "-"
+        }
     }
 
     private fun showApiLogs() {
