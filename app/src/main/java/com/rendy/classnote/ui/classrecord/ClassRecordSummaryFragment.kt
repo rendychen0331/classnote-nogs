@@ -70,21 +70,22 @@ class ClassRecordSummaryFragment : Fragment() {
     private fun setupProviderChips() {
         val prefs = AppPreferences(requireContext())
         val chipMap = mapOf(
-            binding.chipGemini to ("gemini" to prefs.geminiApiKey),
-            binding.chipMimo   to ("mimo"   to prefs.mimoApiKey),
-            binding.chipClaude to ("claude" to prefs.claudeApiKey),
-            binding.chipOpenai to ("openai" to prefs.openaiApiKey)
+            binding.chipGemini to ("gemini" to (prefs.geminiApiKey to prefs.geminiEnabled)),
+            binding.chipMimo   to ("mimo"   to (prefs.mimoApiKey   to prefs.mimoEnabled)),
+            binding.chipClaude to ("claude" to (prefs.claudeApiKey to prefs.claudeEnabled)),
+            binding.chipOpenai to ("openai" to (prefs.openaiApiKey to prefs.openaiEnabled))
         )
 
         chipMap.forEach { (chip, pair) ->
-            val hasKey = pair.second.isNotBlank()
-            chip.isEnabled = hasKey
-            chip.alpha = if (hasKey) 1f else 0.4f
+            val (_, keyAndEnabled) = pair
+            val active = keyAndEnabled.first.isNotBlank() && keyAndEnabled.second
+            chip.isEnabled = active
+            chip.alpha = if (active) 1f else 0.4f
         }
 
         val preferred = prefs.preferredChatProvider
         val preferredChip = chipMap.entries.firstOrNull { it.value.first == preferred }?.key
-        val firstAvailable = chipMap.entries.firstOrNull { it.value.second.isNotBlank() }?.key
+        val firstAvailable = chipMap.entries.firstOrNull { it.key.isEnabled }?.key
         (preferredChip?.takeIf { it.isEnabled } ?: firstAvailable)?.isChecked = true
 
         binding.chipGroupProvider.setOnCheckedStateChangeListener { _, checkedIds ->

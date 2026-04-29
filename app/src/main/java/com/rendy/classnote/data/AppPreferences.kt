@@ -125,6 +125,23 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_AI_ENABLED, true)
         set(value) = prefs.edit { putBoolean(KEY_AI_ENABLED, value) }
 
+    /** 各 AI Model 啟用開關。 */
+    var geminiEnabled: Boolean
+        get() = prefs.getBoolean(KEY_GEMINI_ENABLED, true)
+        set(value) = prefs.edit { putBoolean(KEY_GEMINI_ENABLED, value) }
+
+    var mimoEnabled: Boolean
+        get() = prefs.getBoolean(KEY_MIMO_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_MIMO_ENABLED, value) }
+
+    var claudeEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CLAUDE_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_CLAUDE_ENABLED, value) }
+
+    var openaiEnabled: Boolean
+        get() = prefs.getBoolean(KEY_OPENAI_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_OPENAI_ENABLED, value) }
+
     /** 勿擾模式穿透：提醒通知在勿擾模式下仍顯示。預設關閉。需搭配 ACCESS_NOTIFICATION_POLICY 授權。 */
     var bypassDndEnabled: Boolean
         get() = prefs.getBoolean(KEY_BYPASS_DND, false)
@@ -235,6 +252,10 @@ class AppPreferences(context: Context) {
         private const val KEY_OPENAI_API_KEY = "openai_api_key"
         private const val KEY_PREFERRED_CHAT_PROVIDER = "preferred_chat_provider"
         private const val KEY_AI_ENABLED = "ai_enabled"
+        private const val KEY_GEMINI_ENABLED = "gemini_enabled"
+        private const val KEY_MIMO_ENABLED = "mimo_enabled"
+        private const val KEY_CLAUDE_ENABLED = "claude_enabled"
+        private const val KEY_OPENAI_ENABLED = "openai_enabled"
         private const val KEY_NOTIF_LISTENER_AUTO_ADD = "notif_listener_auto_add"
         private const val KEY_BYPASS_DND = "bypass_dnd_enabled"
         private const val KEY_MONITORED_PACKAGES = "notif_monitored_packages"

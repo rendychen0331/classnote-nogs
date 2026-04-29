@@ -899,11 +899,11 @@ class SettingsFragment : Fragment() {
         }
 
         fun setupKeyField(
-            getKey: () -> String,
-            saveKey: (String) -> Unit,
             til: com.google.android.material.textfield.TextInputLayout,
             et: com.google.android.material.textfield.TextInputEditText,
             btn: com.google.android.material.button.MaterialButton,
+            getKey: () -> String,
+            saveKey: (String) -> Unit,
             savedMsg: String
         ) {
             val saved = getKey()
@@ -942,42 +942,83 @@ class SettingsFragment : Fragment() {
             }
         }
 
-        setupKeyField(
-            getKey = { prefs.geminiApiKey },
-            saveKey = { prefs.geminiApiKey = it },
+        fun setupModelSwitch(
+            switch: com.google.android.material.materialswitch.MaterialSwitch,
+            keyLayout: android.view.View,
+            getEnabled: () -> Boolean,
+            saveEnabled: (Boolean) -> Unit,
+            til: com.google.android.material.textfield.TextInputLayout,
+            et: com.google.android.material.textfield.TextInputEditText,
+            btn: com.google.android.material.button.MaterialButton,
+            getKey: () -> String,
+            saveKey: (String) -> Unit,
+            savedMsg: String
+        ) {
+            switch.isChecked = getEnabled()
+            keyLayout.visibility = if (getEnabled()) View.VISIBLE else View.GONE
+            switch.setOnCheckedChangeListener { _, checked ->
+                saveEnabled(checked)
+                keyLayout.visibility = if (checked) View.VISIBLE else View.GONE
+            }
+            setupKeyField(til, et, btn, getKey, saveKey, savedMsg)
+        }
+
+        setupModelSwitch(
+            switch = binding.switchGeminiEnabled,
+            keyLayout = binding.layoutGeminiKey,
+            getEnabled = { prefs.geminiEnabled },
+            saveEnabled = { prefs.geminiEnabled = it },
             til = binding.tilGeminiApiKey,
             et = binding.etGeminiApiKey,
             btn = binding.btnSaveGeminiKey,
+            getKey = { prefs.geminiApiKey },
+            saveKey = { prefs.geminiApiKey = it },
             savedMsg = getString(R.string.settings_ai_gemini_key_saved)
         )
-        setupKeyField(
-            getKey = { prefs.mimoApiKey },
-            saveKey = { prefs.mimoApiKey = it },
+        setupModelSwitch(
+            switch = binding.switchMimoEnabled,
+            keyLayout = binding.layoutMimoKey,
+            getEnabled = { prefs.mimoEnabled },
+            saveEnabled = { prefs.mimoEnabled = it },
             til = binding.tilMimoApiKey,
             et = binding.etMimoApiKey,
             btn = binding.btnSaveMimoKey,
+            getKey = { prefs.mimoApiKey },
+            saveKey = { prefs.mimoApiKey = it },
             savedMsg = "MiMo API Key 已儲存"
         )
-        setupKeyField(
-            getKey = { prefs.claudeApiKey },
-            saveKey = { prefs.claudeApiKey = it },
+        setupModelSwitch(
+            switch = binding.switchClaudeEnabled,
+            keyLayout = binding.layoutClaudeKey,
+            getEnabled = { prefs.claudeEnabled },
+            saveEnabled = { prefs.claudeEnabled = it },
             til = binding.tilClaudeApiKey,
             et = binding.etClaudeApiKey,
             btn = binding.btnSaveClaudeKey,
+            getKey = { prefs.claudeApiKey },
+            saveKey = { prefs.claudeApiKey = it },
             savedMsg = "Claude API Key 已儲存"
         )
-        setupKeyField(
-            getKey = { prefs.openaiApiKey },
-            saveKey = { prefs.openaiApiKey = it },
+        setupModelSwitch(
+            switch = binding.switchOpenaiEnabled,
+            keyLayout = binding.layoutOpenaiKey,
+            getEnabled = { prefs.openaiEnabled },
+            saveEnabled = { prefs.openaiEnabled = it },
             til = binding.tilOpenaiApiKey,
             et = binding.etOpenaiApiKey,
             btn = binding.btnSaveOpenaiKey,
+            getKey = { prefs.openaiApiKey },
+            saveKey = { prefs.openaiApiKey = it },
             savedMsg = "OpenAI API Key 已儲存"
         )
     }
 
     private fun updateAiKeysVisibility() {
-        binding.cardAiKeys.visibility = if (prefs.aiEnabled) View.VISIBLE else View.GONE
+        val v = if (prefs.aiEnabled) View.VISIBLE else View.GONE
+        binding.cardGemini.visibility = v
+        binding.cardMimo.visibility = v
+        binding.cardClaude.visibility = v
+        binding.cardOpenai.visibility = v
     }
 
     // ── 天氣通知 ─────────────────────────────────────────────────────────────
