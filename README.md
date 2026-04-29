@@ -2,16 +2,24 @@
 
 學生專用的課堂筆記與提醒管理App。
 
-Made with Claude(程式碼) & Gemini(App icon + App內建AI功能) & Google Stitch(UI)
+Made with Claude(程式碼) & Gemini(App icon) & Google Stitch(UI)
+
+僅針對Xiaomi HyperOS 優化
+
+## AI功能支援模型(API key)
+- Xiaomi MiMo
+- Google Gemini
+- Anthropic Claude
+- OpenAI ChatGPT
 
 ## 功能
 
 - **課表管理** — 週課表檢視、學期切換
 - **提醒事項** — 新增截止日期、多組通知時間、重複提醒（每天 / 每週 / 每月）
-- **AI 通知辨識** — Gemini 自動辨識通知並自動加入提醒事項
+- **AI 通知辨識** — AI 自動辨識通知並自動加入提醒事項
 - **公式本** — 數學公式儲存，支援 MathQuill 視覺化輸入與 KaTeX 離線渲染
 - **天氣** — 中央氣象署 36 小時預報，22 縣市查詢
-- **上課紀錄** — 拍照、錄音、文字筆記，支援 Gemini AI 摘要
+- **上課紀錄** — 拍照、錄音、文字筆記，支援 AI 摘要
 - **Gmail / Google Classroom 同步** — 自動抓取作業截止日，WorkManager 定時背景執行
 - **Google Drive 備份** — 資料庫備份與還原，支援 WiFi / 行動數據 / 任何網路選擇
 - **桌面小工具** — 月曆小工具顯示近三週提醒事項
@@ -48,8 +56,10 @@ Made with Claude(程式碼) & Gemini(App icon + App內建AI功能) & Google Stit
 - 加入 Microsoft OneNote 支援
 - 加入 Microsoft To Do 支援
 - 加入 Microsoft Outlook 支援
-- 加入 Microsoft Teams支援
-
+- 加入 Microsoft Teams 支援
+- 加入 Xiaomi Account 支援
+- 加入 Xiaomi 日曆 支援
+- 加入 Microsoft Account 支援
 ## 授權
 
 MIT
