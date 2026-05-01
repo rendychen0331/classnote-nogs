@@ -59,23 +59,23 @@ Microsoft Acount & Microsoft Onedrive 支援
 
 ## 預計開發功能
 
-- ~~其他類型筆記的支援~~ Finish
-- 優化App清單讀取時間
-- 加入 Gmail 非 Google Classroom 郵件的AI辨識支援
-- 加入收到 Gmail 或 Google Classroom 通知後自動抓取詳細信息
-- 加入 Google Tasks 支援
-- 加入 Google keep 支援
-- ~~加入 Google 日曆 支援~~ Finish
-- 加入 Microsoft Onedrive 備份支援
-- 加入 Microsoft OneNote 支援
-- 加入 Microsoft To Do 支援
-- 加入 Microsoft Outlook 支援
-- 加入 Microsoft Teams 支援
-- ~~加入 Xiaomi Account 支援~~(無小米開發者帳號，暫時擱置)
-- ~~加入 Xiaomi 日曆 支援~~(無小米開發者帳號，暫時擱置)
-- 加入 Microsoft Account 支援
-- 加入其他天氣 API 支援
-- 新增多 Google Account 支援
+- [x] 其他類型筆記的支援
+- [ ] 優化App清單讀取時間
+- [ ] 加入 Gmail 非 Google Classroom 郵件的AI辨識支援
+- [ ] 加入收到 Gmail 或 Google Classroom 通知後自動抓取詳細信息
+- [x] 加入 Google Tasks 支援
+- [ ] 加入 Google keep 支援
+- [x] 加入 Google 日曆 支援
+- [x] 加入 Microsoft Onedrive 備份支援
+- [ ] 加入 Microsoft OneNote 支援
+- [ ] 加入 Microsoft To Do 支援
+- [ ] 加入 Microsoft Outlook 支援
+- [ ] 加入 Microsoft Teams 支援
+- [ ] ~~加入 Xiaomi Account 支援~~(無小米開發者帳號，暫時擱置)
+- [ ] ~~加入 Xiaomi 日曆 支援~~(無小米開發者帳號，暫時擱置)
+- [x] 加入 Microsoft Account 支援
+- [ ] 加入其他天氣 API 支援
+- [ ] 新增多 Google Account 支援
 ## 授權
 
 MIT
