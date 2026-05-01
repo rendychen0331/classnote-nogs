@@ -65,6 +65,13 @@
                 android:layout_height="wrap_content"
                 android:text="ChatGPT" />
 
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipGroq"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Groq" />
+
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 

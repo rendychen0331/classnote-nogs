@@ -109,7 +109,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="備份與同步"
+                        android:text="雲端服務設定"
                         android:textAppearance="?attr/textAppearanceTitleSmall"
                         android:textColor="?attr/colorOnSurface" />
 
@@ -117,7 +117,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Google Drive、Gmail、Classroom 同步"
+                        android:text="Google、Microsoft 帳戶、備份與同步"
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 

@@ -16,7 +16,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="備份與同步"
+            android:text="雲端服務設定"
             android:textAppearance="?attr/textAppearanceTitleLarge"
             android:layout_marginBottom="16dp" />
 
@@ -57,7 +57,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Drive 備份、Gmail、Classroom、日曆、Tasks"
+                        android:text="Google Drive 備份、Gmail、Classroom、Google 日曆、Tasks"
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -108,7 +108,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="OneDrive 備份"
+                        android:text="OneDrive 備份、To Do、Outlook 行事曆、Teams"
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 

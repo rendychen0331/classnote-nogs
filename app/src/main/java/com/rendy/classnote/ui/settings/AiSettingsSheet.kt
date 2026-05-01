@@ -152,6 +152,18 @@ class AiSettingsSheet : Fragment() {
             saveKey = { prefs.openaiApiKey = it },
             savedMsg = "OpenAI API Key 已儲存"
         )
+        setupModelSwitch(
+            switch = binding.switchGroqEnabled,
+            keyLayout = binding.layoutGroqKey,
+            getEnabled = { prefs.groqEnabled },
+            saveEnabled = { prefs.groqEnabled = it },
+            til = binding.tilGroqApiKey,
+            et = binding.etGroqApiKey,
+            btn = binding.btnSaveGroqKey,
+            getKey = { prefs.groqApiKey },
+            saveKey = { prefs.groqApiKey = it },
+            savedMsg = "Groq API Key 已儲存"
+        )
 
         setupChatProviderChips()
         setupNotifProviderChips()
@@ -162,7 +174,8 @@ class AiSettingsSheet : Fragment() {
             binding.chipChatGemini to ("gemini" to (prefs.geminiApiKey to prefs.geminiEnabled)),
             binding.chipChatMimo   to ("mimo"   to (prefs.mimoApiKey   to prefs.mimoEnabled)),
             binding.chipChatClaude to ("claude" to (prefs.claudeApiKey to prefs.claudeEnabled)),
-            binding.chipChatOpenai to ("openai" to (prefs.openaiApiKey to prefs.openaiEnabled))
+            binding.chipChatOpenai to ("openai" to (prefs.openaiApiKey to prefs.openaiEnabled)),
+            binding.chipChatGroq   to ("groq"   to (prefs.groqApiKey   to prefs.groqEnabled))
         )
         chipMap.forEach { (chip, pair) ->
             val (_, keyAndEnabled) = pair
@@ -188,7 +201,8 @@ class AiSettingsSheet : Fragment() {
             binding.chipNotifGemini to ("gemini" to (prefs.geminiApiKey to prefs.geminiEnabled)),
             binding.chipNotifMimo   to ("mimo"   to (prefs.mimoApiKey   to prefs.mimoEnabled)),
             binding.chipNotifClaude to ("claude" to (prefs.claudeApiKey to prefs.claudeEnabled)),
-            binding.chipNotifOpenai to ("openai" to (prefs.openaiApiKey to prefs.openaiEnabled))
+            binding.chipNotifOpenai to ("openai" to (prefs.openaiApiKey to prefs.openaiEnabled)),
+            binding.chipNotifGroq   to ("groq"   to (prefs.groqApiKey   to prefs.groqEnabled))
         )
         chipMap.forEach { (chip, pair) ->
             val (_, keyAndEnabled) = pair
@@ -215,6 +229,7 @@ class AiSettingsSheet : Fragment() {
         binding.cardMimo.visibility = v
         binding.cardClaude.visibility = v
         binding.cardOpenai.visibility = v
+        binding.cardGroq.visibility = v
         binding.cardChatProvider.visibility = v
         binding.cardNotifProvider.visibility = v
     }

@@ -304,6 +304,31 @@
     <string name="settings_onedrive_auto_backup_desc">定期自動將資料備份至 OneDrive</string>
     <string name="settings_onedrive_sign_in_failed">Microsoft 登入失敗</string>
 
+    <!-- MS To Do -->
+    <string name="settings_section_mstodo">MS To Do 同步</string>
+    <string name="settings_mstodo_sync_title">Microsoft To Do</string>
+    <string name="settings_mstodo_sync_desc">從 Microsoft To Do 匯入未完成任務為提醒事項</string>
+    <string name="settings_mstodo_sync_now">立即同步</string>
+    <string name="settings_mstodo_no_sync">尚未同步</string>
+    <string name="settings_mstodo_sync_result">匯入 %1$d 筆，跳過 %2$d 筆</string>
+
+    <!-- Outlook Calendar -->
+    <string name="settings_section_outlook_calendar">Outlook 行事曆同步</string>
+    <string name="settings_outlook_calendar_sync_title">Outlook 行事曆</string>
+    <string name="settings_outlook_calendar_sync_desc">從 Outlook 行事曆匯入未來 30 天的活動為提醒事項</string>
+    <string name="settings_outlook_calendar_sync_now">立即同步</string>
+    <string name="settings_outlook_calendar_no_sync">尚未同步</string>
+    <string name="settings_outlook_calendar_sync_result">匯入 %1$d 筆，跳過 %2$d 筆</string>
+
+    <!-- Teams for Education -->
+    <string name="settings_section_teams_assignment">Teams 作業同步</string>
+    <string name="settings_teams_assignment_sync_title">Microsoft Teams 作業</string>
+    <string name="settings_teams_assignment_sync_desc">從 Teams for Education 匯入未繳交的作業為提醒事項（需學校帳號）</string>
+    <string name="settings_teams_assignment_sync_now">立即同步</string>
+    <string name="settings_teams_assignment_no_sync">尚未同步</string>
+    <string name="settings_teams_assignment_sync_result">匯入 %1$d 筆，跳過 %2$d 筆</string>
+    <string name="settings_teams_assignment_no_permission">需要學校組織帳號（AAD edu）且已同意 EduAssignments 授權，個人 Microsoft 帳號不支援此功能</string>
+
     <!-- AI 通知解析 -->
     <string name="settings_section_ai_notify">AI 通知解析</string>
     <string name="settings_ai_notify_title">自動解析通知</string>

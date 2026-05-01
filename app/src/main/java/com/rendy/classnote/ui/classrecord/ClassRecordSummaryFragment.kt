@@ -23,6 +23,7 @@ import com.rendy.classnote.R
 import com.rendy.classnote.data.AppPreferences
 import com.rendy.classnote.data.remote.ClaudeApi
 import com.rendy.classnote.data.remote.GeminiApi
+import com.rendy.classnote.data.remote.GroqApi
 import com.rendy.classnote.data.remote.MimoApi
 import com.rendy.classnote.data.remote.OpenAiApi
 import com.rendy.classnote.databinding.FragmentClassRecordSummaryBinding
@@ -165,7 +166,8 @@ class ClassRecordSummaryFragment : Fragment() {
             binding.chipGemini to ("gemini" to (prefs.geminiApiKey to prefs.geminiEnabled)),
             binding.chipMimo   to ("mimo"   to (prefs.mimoApiKey   to prefs.mimoEnabled)),
             binding.chipClaude to ("claude" to (prefs.claudeApiKey to prefs.claudeEnabled)),
-            binding.chipOpenai to ("openai" to (prefs.openaiApiKey to prefs.openaiEnabled))
+            binding.chipOpenai to ("openai" to (prefs.openaiApiKey to prefs.openaiEnabled)),
+            binding.chipGroq   to ("groq"   to (prefs.groqApiKey   to prefs.groqEnabled))
         )
 
         chipMap.forEach { (chip, pair) ->
@@ -193,6 +195,7 @@ class ClassRecordSummaryFragment : Fragment() {
             R.id.chipMimo   -> "mimo"
             R.id.chipClaude -> "claude"
             R.id.chipOpenai -> "openai"
+            R.id.chipGroq   -> "groq"
             else            -> "gemini"
         }
     }
@@ -210,6 +213,7 @@ class ClassRecordSummaryFragment : Fragment() {
             "mimo"   -> prefs.mimoApiKey
             "claude" -> prefs.claudeApiKey
             "openai" -> prefs.openaiApiKey
+            "groq"   -> prefs.groqApiKey
             else     -> prefs.geminiApiKey
         }
         if (apiKey.isBlank()) {
@@ -230,6 +234,7 @@ class ClassRecordSummaryFragment : Fragment() {
                 "mimo"   -> MimoApi.chatWithContext(apiKey, noteContext, history, text)
                 "claude" -> ClaudeApi.chatWithContext(apiKey, noteContext, history, text)
                 "openai" -> OpenAiApi.chatWithContext(apiKey, noteContext, history, text)
+                "groq"   -> GroqApi.chatWithContext(apiKey, noteContext, history, text)
                 else     -> GeminiApi.chatWithContext(apiKey, noteContext, history, text)
             }
             binding.progressChat.visibility = View.GONE

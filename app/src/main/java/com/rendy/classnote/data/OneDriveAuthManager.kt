@@ -16,12 +16,22 @@ import com.rendy.classnote.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 object OneDriveAuthManager {
 
     private const val TAG = "OneDriveAuthManager"
-    val SCOPES = listOf("Files.ReadWrite.AppFolder", "User.Read")
+    val SCOPES = listOf(
+        "Files.ReadWrite.AppFolder",
+        "Files.ReadWrite",
+        "Tasks.Read",
+        "Calendars.Read",
+        "User.Read"
+    )
+
+    // EduAssignments.ReadBasic 只適用學校組織帳號，不放進全域 SCOPES 避免 personal 帳號 login 失敗
+    val TEAMS_SCOPES = listOf("EduAssignments.ReadBasic", "User.Read")
 
     @Volatile
     private var msalApp: ISingleAccountPublicClientApplication? = null
@@ -58,7 +68,9 @@ object OneDriveAuthManager {
         }
     }
 
-    suspend fun getAccountEmail(context: Context): String? = getCurrentAccount(context)?.username
+    suspend fun getAccountEmail(context: Context): String? =
+        getCurrentAccount(context)?.username
+            ?: AppPreferences(context).msAccountEmail
 
     suspend fun signIn(activity: Activity): String? {
         val app = getApp(activity) ?: return null
@@ -68,11 +80,13 @@ object OneDriveAuthManager {
                 .withScopes(SCOPES)
                 .withCallback(object : AuthenticationCallback {
                     override fun onSuccess(result: IAuthenticationResult) {
+                        AppPreferences(activity.applicationContext).msAccountEmail =
+                            result.account.username
                         cont.resume(result.accessToken)
                     }
                     override fun onError(e: MsalException) {
-                        Log.e(TAG, "sign-in error", e)
-                        cont.resume(null)
+                        Log.e(TAG, "sign-in error: ${e.errorCode} ${e.message}", e)
+                        cont.resumeWithException(e)
                     }
                     override fun onCancel() { cont.resume(null) }
                 })
@@ -81,25 +95,32 @@ object OneDriveAuthManager {
         }
     }
 
-    suspend fun acquireTokenSilent(context: Context): String? {
+    suspend fun acquireTokenSilent(context: Context): String? =
+        acquireTokenSilentWithScopes(context, SCOPES)
+
+    suspend fun acquireTokenSilentForTeams(context: Context): String? =
+        acquireTokenSilentWithScopes(context, TEAMS_SCOPES)
+
+    private suspend fun acquireTokenSilentWithScopes(context: Context, scopes: List<String>): String? {
         val app = getApp(context) ?: return null
         val account = getCurrentAccount(context) ?: return null
         return try {
             withContext(Dispatchers.IO) {
                 val params = AcquireTokenSilentParameters.Builder()
-                    .withScopes(SCOPES)
+                    .withScopes(scopes)
                     .fromAuthority(account.authority)
                     .forAccount(account)
                     .build()
                 app.acquireTokenSilent(params).accessToken
             }
         } catch (e: Exception) {
-            Log.e(TAG, "silent token error", e)
+            Log.e(TAG, "silent token error (scopes=$scopes)", e)
             null
         }
     }
 
     suspend fun signOut(context: Context) {
+        AppPreferences(context).msAccountEmail = null
         val app = getApp(context) ?: return
         suspendCoroutine<Unit> { cont ->
             app.signOut(object : ISingleAccountPublicClientApplication.SignOutCallback {

@@ -130,6 +130,42 @@ class AppPreferences(context: Context) {
         get() = prefs.getInt(KEY_AUTO_TASKS_SYNC_INTERVAL_HOURS, 6)
         set(value) = prefs.edit { putInt(KEY_AUTO_TASKS_SYNC_INTERVAL_HOURS, value) }
 
+    /** MS To Do 同步開關。預設關閉。 */
+    var msTodoSyncEnabled: Boolean
+        get() = prefs.getBoolean(KEY_MSTODO_SYNC_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_MSTODO_SYNC_ENABLED, value) }
+
+    /** 上次 MS To Do 同步結果摘要。 */
+    var lastMsTodoSyncSummary: String
+        get() = prefs.getString(KEY_MSTODO_SYNC_SUMMARY, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_MSTODO_SYNC_SUMMARY, value) }
+
+    /** Outlook Calendar 同步開關。預設關閉。 */
+    var outlookCalendarSyncEnabled: Boolean
+        get() = prefs.getBoolean(KEY_OUTLOOK_CALENDAR_SYNC_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_OUTLOOK_CALENDAR_SYNC_ENABLED, value) }
+
+    /** 上次 Outlook Calendar 同步結果摘要。 */
+    var lastOutlookCalendarSyncSummary: String
+        get() = prefs.getString(KEY_OUTLOOK_CALENDAR_SYNC_SUMMARY, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_OUTLOOK_CALENDAR_SYNC_SUMMARY, value) }
+
+    /** Teams 作業同步開關。預設關閉。 */
+    var teamsAssignmentSyncEnabled: Boolean
+        get() = prefs.getBoolean(KEY_TEAMS_ASSIGNMENT_SYNC_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_TEAMS_ASSIGNMENT_SYNC_ENABLED, value) }
+
+    /** 上次 Teams 作業同步結果摘要。 */
+    var lastTeamsAssignmentSyncSummary: String
+        get() = prefs.getString(KEY_TEAMS_ASSIGNMENT_SYNC_SUMMARY, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_TEAMS_ASSIGNMENT_SYNC_SUMMARY, value) }
+
+    /** 已登入的 Microsoft 帳號 email（登入時存，登出時清）。 */
+    var msAccountEmail: String?
+        get() = prefs.getString(KEY_MS_ACCOUNT_EMAIL, null)
+        set(value) = if (value != null) prefs.edit { putString(KEY_MS_ACCOUNT_EMAIL, value) }
+                     else prefs.edit { remove(KEY_MS_ACCOUNT_EMAIL) }
+
     /** OneDrive 備份開關。預設關閉。 */
     var oneDriveBackupEnabled: Boolean
         get() = prefs.getBoolean(KEY_ONEDRIVE_BACKUP_ENABLED, false)
@@ -206,6 +242,15 @@ class AppPreferences(context: Context) {
     var openaiEnabled: Boolean
         get() = prefs.getBoolean(KEY_OPENAI_ENABLED, false)
         set(value) = prefs.edit { putBoolean(KEY_OPENAI_ENABLED, value) }
+
+    /** Groq API Key。 */
+    var groqApiKey: String
+        get() = prefs.getString(KEY_GROQ_API_KEY, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_GROQ_API_KEY, value) }
+
+    var groqEnabled: Boolean
+        get() = prefs.getBoolean(KEY_GROQ_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_GROQ_ENABLED, value) }
 
     /** 勿擾模式穿透：提醒通知在勿擾模式下仍顯示。預設關閉。需搭配 ACCESS_NOTIFICATION_POLICY 授權。 */
     var bypassDndEnabled: Boolean
@@ -322,6 +367,8 @@ class AppPreferences(context: Context) {
         private const val KEY_MIMO_ENABLED = "mimo_enabled"
         private const val KEY_CLAUDE_ENABLED = "claude_enabled"
         private const val KEY_OPENAI_ENABLED = "openai_enabled"
+        private const val KEY_GROQ_API_KEY = "groq_api_key"
+        private const val KEY_GROQ_ENABLED = "groq_enabled"
         private const val KEY_NOTIF_LISTENER_AUTO_ADD = "notif_listener_auto_add"
         private const val KEY_BYPASS_DND = "bypass_dnd_enabled"
         private const val KEY_MONITORED_PACKAGES = "notif_monitored_packages"
@@ -344,6 +391,13 @@ class AppPreferences(context: Context) {
         private const val KEY_AUTO_TASKS_SYNC_INTERVAL_HOURS = "auto_tasks_sync_interval_hours"
         private const val KEY_DEFAULT_REMIND_HOUR = "default_remind_hour"
         private const val KEY_DEFAULT_REMIND_MINUTE = "default_remind_minute"
+        private const val KEY_MSTODO_SYNC_ENABLED = "mstodo_sync_enabled"
+        private const val KEY_MSTODO_SYNC_SUMMARY = "mstodo_sync_summary"
+        private const val KEY_OUTLOOK_CALENDAR_SYNC_ENABLED = "outlook_calendar_sync_enabled"
+        private const val KEY_OUTLOOK_CALENDAR_SYNC_SUMMARY = "outlook_calendar_sync_summary"
+        private const val KEY_TEAMS_ASSIGNMENT_SYNC_ENABLED = "teams_assignment_sync_enabled"
+        private const val KEY_TEAMS_ASSIGNMENT_SYNC_SUMMARY = "teams_assignment_sync_summary"
+        private const val KEY_MS_ACCOUNT_EMAIL = "ms_account_email"
         private const val KEY_ONEDRIVE_BACKUP_ENABLED = "onedrive_backup_enabled"
         private const val KEY_ONEDRIVE_SYNC_SUMMARY = "onedrive_sync_summary"
         private const val KEY_AUTO_ONEDRIVE_BACKUP_ENABLED = "auto_onedrive_backup_enabled"

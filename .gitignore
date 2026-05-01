@@ -23,7 +23,10 @@ CLAUDE.md
 # Google 服務設定（含 OAuth client，需自行申請）
 google-services.json
 
+# Microsoft Entra / MSAL 設定（含 client_id、signature hash，需自行申請）
+msal_config.json
+app/src/main/res/values/msal_auth_config.xml
+
 # 執行期產生的檔案
 .playwright-mcp/
 logs/
-app/src/main/res/raw/msal_config.json

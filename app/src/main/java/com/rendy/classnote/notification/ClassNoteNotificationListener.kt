@@ -14,6 +14,7 @@ import com.rendy.classnote.data.local.entity.ReminderEntity
 import com.rendy.classnote.data.local.entity.ReminderNotificationEntity
 import com.rendy.classnote.data.remote.ClaudeApi
 import com.rendy.classnote.data.remote.GeminiApi
+import com.rendy.classnote.data.remote.GroqApi
 import com.rendy.classnote.data.remote.MimoApi
 import com.rendy.classnote.data.remote.OpenAiApi
 import kotlinx.coroutines.CoroutineScope
@@ -37,16 +38,6 @@ class ClassNoteNotificationListener : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val prefs = AppPreferences(applicationContext)
         if (!prefs.notificationListenerAutoAdd) return
-
-        // 確認至少有一個啟用的 model 有 key
-        val hasAnyKey = with(prefs) {
-            (geminiEnabled && geminiApiKey.isNotBlank()) ||
-            (mimoEnabled   && mimoApiKey.isNotBlank())   ||
-            (claudeEnabled && claudeApiKey.isNotBlank()) ||
-            (openaiEnabled && openaiApiKey.isNotBlank())
-        }
-        if (!hasAnyKey) return
-
         if (sbn.packageName == packageName) return
 
         val monitored = prefs.monitoredPackages
@@ -54,10 +45,34 @@ class ClassNoteNotificationListener : NotificationListenerService() {
 
         val extras = sbn.notification?.extras ?: return
         val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim() ?: return
+        if (title.isBlank()) return
 
-        // 優先用 MessagingStyle 取完整訊息（LINE、Discord、WhatsApp 等聊天 App）
+        // MessagingStyle 提前取出，用於計算 channelName
         val messagingStyle = NotificationCompat.MessagingStyle
             .extractMessagingStyleFromNotification(sbn.notification)
+
+        // 群組聊天（LINE、WhatsApp 等）的 conversationTitle 是群組名，不含「：發送者」後綴
+        // 用它作頻道 key，避免同一群組多人發言被記成不同頻道
+        val channelName = messagingStyle?.conversationTitle?.toString()?.trim()
+            ?.takeIf { it.isNotBlank() } ?: title
+
+        // 頻道白名單過濾（不透過 AI，直接用 channelName 比對）
+        val channelWhitelist = prefs.getMonitoredChannels()[sbn.packageName]
+        if (!channelWhitelist.isNullOrEmpty() && !channelWhitelist.contains(channelName)) return
+
+        // 記錄看過的頻道名稱（供 UI 設定白名單），不受 AI key 或開關影響
+        prefs.addSeenChannel(sbn.packageName, channelName)
+
+        // 確認至少有一個啟用的 model 有 key
+        val hasAnyKey = with(prefs) {
+            (geminiEnabled && geminiApiKey.isNotBlank()) ||
+            (mimoEnabled   && mimoApiKey.isNotBlank())   ||
+            (claudeEnabled && claudeApiKey.isNotBlank()) ||
+            (openaiEnabled && openaiApiKey.isNotBlank()) ||
+            (groqEnabled   && groqApiKey.isNotBlank())
+        }
+        if (!hasAnyKey) return
+
         val text = if (messagingStyle != null && messagingStyle.messages.isNotEmpty()) {
             messagingStyle.messages
                 .takeLast(3)
@@ -69,14 +84,7 @@ class ClassNoteNotificationListener : NotificationListenerService() {
                 ?.toString()?.trim()
         } ?: return
 
-        if (title.isBlank() || text.isBlank()) return
-
-        // 記錄看過的頻道名稱（供 UI 設定白名單）
-        prefs.addSeenChannel(sbn.packageName, title)
-
-        // 頻道白名單過濾（不透過 AI，直接用 title 比對）
-        val channelWhitelist = prefs.getMonitoredChannels()[sbn.packageName]
-        if (!channelWhitelist.isNullOrEmpty() && !channelWhitelist.contains(title)) return
+        if (text.isBlank()) return
 
         val dedupeKey = "${sbn.packageName}|$title|${text.take(100)}"
         val isNew = synchronized(seenKeys) {
@@ -126,6 +134,8 @@ class ClassNoteNotificationListener : NotificationListenerService() {
                         ClaudeApi.analyzeNotifications(prefs.claudeApiKey, batch)
                     provider == "openai" && prefs.openaiEnabled && prefs.openaiApiKey.isNotBlank() ->
                         OpenAiApi.analyzeNotifications(prefs.openaiApiKey, batch)
+                    provider == "groq"   && prefs.groqEnabled   && prefs.groqApiKey.isNotBlank()   ->
+                        GroqApi.analyzeNotifications(prefs.groqApiKey, batch)
                     prefs.geminiEnabled  && prefs.geminiApiKey.isNotBlank()                        ->
                         GeminiApi.analyzeNotifications(prefs.geminiApiKey, batch)
                     prefs.mimoEnabled    && prefs.mimoApiKey.isNotBlank()                          ->
@@ -134,6 +144,8 @@ class ClassNoteNotificationListener : NotificationListenerService() {
                         ClaudeApi.analyzeNotifications(prefs.claudeApiKey, batch)
                     prefs.openaiEnabled  && prefs.openaiApiKey.isNotBlank()                        ->
                         OpenAiApi.analyzeNotifications(prefs.openaiApiKey, batch)
+                    prefs.groqEnabled    && prefs.groqApiKey.isNotBlank()                          ->
+                        GroqApi.analyzeNotifications(prefs.groqApiKey, batch)
                     else -> { NotificationHelper.cancelAiStatus(applicationContext); return@launch }
                 }
                 val db = ClassNoteDatabase.getDatabase(applicationContext)

@@ -40,10 +40,15 @@ class MainActivity : AppCompatActivity() {
 
         binding.bottomNavigation.setupWithNavController(navController)
         // setupWithNavController 同步 NavController→BottomNav 選中狀態（保留）
-        // 覆寫 item 點擊：切換 tab 前若在設定頁，先 pop 掉，避免設定被存進 tab 的 back stack
+        // 覆寫 item 點擊：切換 tab 前若在設定頁（含子頁面），先 pop 回根，避免子頁被留在 back stack
+        val settingsDestinations = setOf(
+            R.id.settingsFragment, R.id.alarmPermFragment, R.id.backupSyncFragment,
+            R.id.googleSyncFragment, R.id.microsoftSyncFragment, R.id.weatherNotifFragment,
+            R.id.aiSettingsFragment, R.id.notifListenerFragment, R.id.apiLogFragment
+        )
         binding.bottomNavigation.setOnItemSelectedListener { item ->
-            if (navController.currentDestination?.id == R.id.settingsFragment) {
-                navController.popBackStack()
+            if (navController.currentDestination?.id in settingsDestinations) {
+                navController.popBackStack(R.id.settingsFragment, inclusive = true)
             }
             NavigationUI.onNavDestinationSelected(item, navController)
         }

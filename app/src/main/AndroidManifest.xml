@@ -124,7 +124,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:host="com.rendy.classnote"
-                    android:path="/2jmj7l5rSw0yVb/vlWAYkK/YBwk="
+                    android:path="@string/msal_redirect_path"
                     android:scheme="msauth" />
             </intent-filter>
         </activity>

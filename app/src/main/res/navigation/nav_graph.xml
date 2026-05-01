@@ -161,7 +161,7 @@
     <fragment
         android:id="@+id/backupSyncFragment"
         android:name="com.rendy.classnote.ui.settings.BackupSyncSheet"
-        android:label="備份與同步"
+        android:label="雲端服務設定"
         tools:layout="@layout/sheet_backup_sync">
         <action
             android:id="@+id/actionBackupSyncToGoogleSync"
