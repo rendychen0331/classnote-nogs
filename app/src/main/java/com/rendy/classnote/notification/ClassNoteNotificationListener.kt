@@ -56,6 +56,10 @@ class ClassNoteNotificationListener : NotificationListenerService() {
         val channelName = messagingStyle?.conversationTitle?.toString()?.trim()
             ?.takeIf { it.isNotBlank() } ?: title
 
+        // 頻道黑名單過濾（優先於白名單，黑名單內的頻道直接忽略）
+        val channelBlacklist = prefs.getBlacklistedChannels()[sbn.packageName]
+        if (!channelBlacklist.isNullOrEmpty() && channelBlacklist.contains(channelName)) return
+
         // 頻道白名單過濾（不透過 AI，直接用 channelName 比對）
         val channelWhitelist = prefs.getMonitoredChannels()[sbn.packageName]
         if (!channelWhitelist.isNullOrEmpty() && !channelWhitelist.contains(channelName)) return

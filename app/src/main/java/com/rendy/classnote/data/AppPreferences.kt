@@ -325,6 +325,20 @@ class AppPreferences(context: Context) {
         }
     }
 
+    fun clearSeenChannels(pkg: String) {
+        val map = getSeenChannels().toMutableMap()
+        map.remove(pkg)
+        prefs.edit { putString(KEY_SEEN_CHANNELS, toChannelJson(map)) }
+    }
+
+    /** 頻道黑名單：非空集合代表封鎖該 App 指定頻道，優先於白名單。 */
+    fun getBlacklistedChannels(): Map<String, Set<String>> =
+        parseChannelJson(prefs.getString(KEY_BLACKLISTED_CHANNELS, null))
+
+    fun setBlacklistedChannels(map: Map<String, Set<String>>) {
+        prefs.edit { putString(KEY_BLACKLISTED_CHANNELS, toChannelJson(map)) }
+    }
+
     private fun parseChannelJson(json: String?): Map<String, Set<String>> {
         json ?: return emptyMap()
         return try {
@@ -374,6 +388,7 @@ class AppPreferences(context: Context) {
         private const val KEY_MONITORED_PACKAGES = "notif_monitored_packages"
         private const val KEY_MONITORED_CHANNELS = "notif_monitored_channels"
         private const val KEY_SEEN_CHANNELS = "notif_seen_channels"
+        private const val KEY_BLACKLISTED_CHANNELS = "notif_blacklisted_channels"
         private const val KEY_QUIET_HOURS_START = "quiet_hours_start"
         private const val KEY_QUIET_HOURS_END = "quiet_hours_end"
         private const val KEY_QUIET_HOURS_POLICY_BEFORE = "quiet_hours_policy_before"

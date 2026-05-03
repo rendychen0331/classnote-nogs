@@ -98,6 +98,16 @@ class NotifListenerSheet : Fragment() {
         }
         updateChannelFilterSummary()
 
+        binding.btnChannelBlacklist.setOnClickListener {
+            BiometricHelper.authenticate(
+                fragment = this,
+                title = getString(R.string.biometric_title_monitor),
+                subtitle = getString(R.string.biometric_subtitle_monitor),
+                onSuccess = { showChannelBlacklistAppPickerDialog() }
+            )
+        }
+        updateChannelBlacklistSummary()
+
         updateDefaultRemindTimeSummary()
         binding.tvDefaultRemindTime.setOnClickListener {
             TimePickerDialog(
@@ -235,6 +245,109 @@ class NotifListenerSheet : Fragment() {
             getString(R.string.settings_ai_channel_filter_count, configured)
     }
 
+    private fun updateChannelBlacklistSummary() {
+        val configured = prefs.getBlacklistedChannels().count { it.value.isNotEmpty() }
+        binding.tvChannelBlacklist.text = if (configured == 0)
+            getString(R.string.settings_ai_channel_blacklist_none)
+        else
+            getString(R.string.settings_ai_channel_blacklist_count, configured)
+    }
+
+    private fun showChannelBlacklistAppPickerDialog() {
+        val loadingDialog = cachedAppList?.let { null } ?: MaterialAlertDialogBuilder(requireContext())
+            .setMessage("載入 App 清單…")
+            .setCancelable(true)
+            .show()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val allItems = loadAppList()
+            if (!isAdded) return@launch
+            loadingDialog?.dismiss()
+
+            val blacklisted = prefs.getBlacklistedChannels()
+            val seen = prefs.getSeenChannels()
+
+            val allLabeled = allItems.map { (label, pkg) ->
+                val blacklistCount = blacklisted[pkg]?.size ?: 0
+                val seenCount = seen[pkg]?.size ?: 0
+                val suffix = when {
+                    blacklistCount > 0 -> "（已封鎖 $blacklistCount 個頻道）"
+                    seenCount > 0      -> "（$seenCount 個頻道可選）"
+                    else               -> ""
+                }
+                "$label$suffix" to pkg
+            }.toMutableList()
+
+            val displayedItems = allLabeled.toMutableList()
+
+            val dialogView = layoutInflater.inflate(R.layout.dialog_app_picker, null)
+            val etSearch = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etAppSearch)
+            val listView = dialogView.findViewById<android.widget.ListView>(R.id.listViewApps)
+
+            val adapter = object : android.widget.BaseAdapter() {
+                override fun getCount() = displayedItems.size
+                override fun getItem(pos: Int) = displayedItems[pos]
+                override fun getItemId(pos: Int) = pos.toLong()
+                override fun getView(pos: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
+                    val view = (convertView as? android.widget.TextView)
+                        ?: layoutInflater.inflate(android.R.layout.simple_list_item_1, parent, false) as android.widget.TextView
+                    view.text = displayedItems[pos].first
+                    return view
+                }
+            }
+            listView.adapter = adapter
+
+            listView.setOnItemClickListener { _, _, pos, _ ->
+                val pkg = displayedItems[pos].second
+                showChannelBlacklistDialog(pkg, seen[pkg] ?: emptySet())
+            }
+
+            etSearch.doAfterTextChanged { text ->
+                val query = text?.toString()?.trim()?.lowercase() ?: ""
+                displayedItems.clear()
+                displayedItems.addAll(
+                    if (query.isBlank()) allLabeled
+                    else allLabeled.filter { it.first.lowercase().contains(query) }
+                )
+                adapter.notifyDataSetChanged()
+            }
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.settings_ai_channel_blacklist_select_app))
+                .setView(dialogView)
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show()
+        }
+    }
+
+    private fun showChannelBlacklistDialog(pkg: String, seenChannels: Set<String>) {
+        val pm = requireContext().packageManager
+        val appLabel = try { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() } catch (_: Exception) { pkg }
+        val currentBlacklist = prefs.getBlacklistedChannels()[pkg] ?: emptySet()
+        val channels = (seenChannels + currentBlacklist).sorted().toMutableList()
+        val checkedItems = channels.map { currentBlacklist.contains(it) }.toBooleanArray()
+
+        val builder = MaterialAlertDialogBuilder(requireContext()).setTitle("封鎖頻道 - $appLabel")
+        if (channels.isEmpty()) {
+            builder.setMessage("尚無頻道紀錄，先讓 App 發送通知後再設定")
+            builder.setNegativeButton(getString(R.string.cancel), null).show()
+        } else {
+            builder.setMultiChoiceItems(channels.toTypedArray(), checkedItems) { _, which, isChecked ->
+                checkedItems[which] = isChecked
+            }
+            builder
+                .setPositiveButton(getString(R.string.save)) { _, _ ->
+                    val selected = channels.indices.filter { checkedItems[it] }.map { channels[it] }.toSet()
+                    val map = prefs.getBlacklistedChannels().toMutableMap()
+                    if (selected.isEmpty()) map.remove(pkg) else map[pkg] = selected
+                    prefs.setBlacklistedChannels(map)
+                    updateChannelBlacklistSummary()
+                }
+                .setNegativeButton(getString(R.string.cancel), null)
+                .show()
+        }
+    }
+
     private fun showChannelAppPickerDialog() {
         val loadingDialog = cachedAppList?.let { null } ?: MaterialAlertDialogBuilder(requireContext())
             .setMessage("載入 App 清單…")
@@ -316,24 +429,43 @@ class NotifListenerSheet : Fragment() {
             if (channelList.isEmpty()) {
                 // 無記錄時只顯示訊息，不設 list（兩者衝突）
                 builder.setMessage("尚無頻道紀錄，可點「手動新增」加入頻道名稱")
+                builder
+                    .setPositiveButton(getString(R.string.save), null)
+                    .setNeutralButton("手動新增") { _, _ ->
+                        showManualAddChannelDialog(pkg, channelList, checked)
+                    }
+                    .setNegativeButton(getString(R.string.cancel), null)
+                    .show()
             } else {
                 builder.setMultiChoiceItems(channelList.toTypedArray(), checked) { _, which, isChecked ->
                     checked[which] = isChecked
                 }
+                builder
+                    .setPositiveButton(getString(R.string.save)) { _, _ ->
+                        val selected = channelList.indices.filter { checked[it] }.map { channelList[it] }.toSet()
+                        val map = prefs.getMonitoredChannels().toMutableMap()
+                        if (selected.isEmpty()) map.remove(pkg) else map[pkg] = selected
+                        prefs.setMonitoredChannels(map)
+                        updateChannelFilterSummary()
+                    }
+                    .setNeutralButton("手動新增") { _, _ ->
+                        showManualAddChannelDialog(pkg, channelList, checked)
+                    }
+                    .setNegativeButton("清除紀錄") { _, _ ->
+                        MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("清除頻道紀錄")
+                            .setMessage("清除「$appLabel」的所有已記錄頻道？\n已加入白名單的頻道不受影響。")
+                            .setPositiveButton("清除") { _, _ ->
+                                prefs.clearSeenChannels(pkg)
+                                showChannelWhitelistDialog(pkg, prefs.getSeenChannels()[pkg] ?: emptySet())
+                            }
+                            .setNegativeButton(getString(R.string.cancel)) { _, _ ->
+                                showChannelWhitelistDialog(pkg, prefs.getSeenChannels()[pkg] ?: channelList.toSet())
+                            }
+                            .show()
+                    }
+                    .show()
             }
-            builder
-                .setPositiveButton(getString(R.string.save)) { _, _ ->
-                    val selected = channelList.indices.filter { checked[it] }.map { channelList[it] }.toSet()
-                    val map = prefs.getMonitoredChannels().toMutableMap()
-                    if (selected.isEmpty()) map.remove(pkg) else map[pkg] = selected
-                    prefs.setMonitoredChannels(map)
-                    updateChannelFilterSummary()
-                }
-                .setNeutralButton("手動新增") { _, _ ->
-                    showManualAddChannelDialog(pkg, channelList, checked)
-                }
-                .setNegativeButton(getString(R.string.cancel), null)
-                .show()
         }
 
         buildAndShow(channels, checkedItems)

@@ -74,13 +74,14 @@ class MainActivity : AppCompatActivity() {
         binding.toolbar.inflateMenu(R.menu.toolbar_menu)
         binding.toolbar.setOnMenuItemClickListener { item ->
             if (item.itemId == R.id.action_settings) {
-                if (navController.currentDestination?.id == R.id.settingsFragment) {
-                    navController.popBackStack()
-                } else {
-                    navController.navigate(R.id.settingsFragment)
-                }
+                navController.navigate(R.id.settingsFragment)
                 true
             } else false
+        }
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            binding.toolbar.menu.findItem(R.id.action_settings)
+                ?.isVisible = destination.id !in settingsDestinations
         }
 
         // 僅首次建立時請求權限（避免旋轉螢幕重複跳轉設定頁）

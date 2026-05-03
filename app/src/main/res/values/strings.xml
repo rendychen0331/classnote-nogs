@@ -361,6 +361,12 @@
     <string name="settings_ai_channel_select_app">選擇 App</string>
     <string name="settings_ai_channel_no_seen">尚未收到任何通知，無法設定頻道</string>
     <string name="settings_ai_channel_clear_btn">清除（監控全部）</string>
+    <!-- 頻道黑名單 -->
+    <string name="settings_ai_channel_blacklist_title">頻道黑名單</string>
+    <string name="settings_ai_channel_blacklist_btn">設定</string>
+    <string name="settings_ai_channel_blacklist_none">未設定</string>
+    <string name="settings_ai_channel_blacklist_count">已封鎖 %1$d 個 App 的頻道</string>
+    <string name="settings_ai_channel_blacklist_select_app">選擇要封鎖頻道的 App</string>
     <string name="settings_ai_default_remind_time_title">無時間事件的預設提醒時間</string>
     <string name="settings_ai_default_remind_time_desc">辨識出日期但無時間的事件（如「明天游泳」），在此時間提醒</string>
 </resources>
