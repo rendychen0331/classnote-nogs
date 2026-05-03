@@ -1,6 +1,6 @@
 
 
-
+> [!CAUTION] 
 # [已棄用] 請注意，此專案已停止維護，請前往[新專案](https://github.com/rendychen0331/classnote-public-edition)
 # [DEPRECATED] This project is no longer maintained. Please use [New Project](https://github.com/rendychen0331/classnote-public-edition) instead.
 
